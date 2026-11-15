@@ -1,0 +1,654 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Подвал Витриоля</title>
+<meta name="description" content="Подвал Витриоля: кабаре на Почтамтской улице. Прототип страницы с афишей.">
+<!-- прототип: вечера выдуманы, поэтому поисковикам страницу не показываем -->
+<meta name="robots" content="noindex, nofollow">
+<meta name="theme-color" content="#0c0b14">
+<style>
+/* Шрифты Forum и PT Sans (лицензия OFL), только нужные знаки. */
+@font-face{font-family:'Forum';font-style:normal;font-weight:400;font-display:swap;src:url(fonts/forum.woff) format('woff')}
+@font-face{font-family:'PT Sans';font-style:normal;font-weight:400;font-display:swap;src:url(fonts/ptsans.woff) format('woff')}
+@font-face{font-family:'PT Sans';font-style:normal;font-weight:700;font-display:swap;src:url(fonts/ptsans-bold.woff) format('woff')}
+body{margin:0}img{max-width:100%}[hidden]{display:none!important}
+</style>
+<style>
+/* Страница Подвала в манере основного сайта: бумага и ночь, гладкий свет, чёткие буквы.
+   Всё нарисованное (стена, шкаф, свод) сделано как гравюра мелким растром в три краски: ночь, синий, молочный.
+   Рисунки получены из снимков самого Подвала, но фотографий на странице нет: в подвале один свет, синий. */
+:root{
+  --paper:#f8f7f4; --ink:#141416; --milk:#eceefb; --milk-2:#b9b8d6; --milk-3:#8583a8; --night:#0c0b14; --blue:#2228ff;
+  --display:'Forum',Georgia,'Times New Roman',serif;
+  --text:'PT Sans','Helvetica Neue',Arial,sans-serif;
+  --gl:max(16px,env(safe-area-inset-left,0px)); --gr:max(16px,env(safe-area-inset-right,0px));
+  --lw:min(150px,16.6vh,36vw); --lt:36px;
+}
+html{background:var(--night)}
+body{background:var(--night);color:var(--ink);font-family:var(--text);font-size:16px;line-height:1.5;overflow-x:hidden;-webkit-font-smoothing:antialiased}
+.gut{padding-left:var(--gl);padding-right:var(--gr)}
+.vh{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
+
+/* фон: бумага темнеет до ночи, поверх зерно. Цвет не перекрашивается: поверх бумаги проявляются готовые слои сумерек и ночи, зерно впечатано прямо в них,
+   так браузеру не приходится заново рисовать весь экран на каждом кадре */
+#bg{position:fixed;inset:0;z-index:0;background:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='300' height='300'%3E%3Cfilter id='g'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.95' numOctaves='2' stitchTiles='stitch' seed='3'/%3E%3CfeColorMatrix type='matrix' values='0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 .15 .15 .15 0 -.18'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23g)'/%3E%3C/svg%3E") 0 0/300px 300px,var(--paper);pointer-events:none}
+#bg i{position:absolute;inset:0;opacity:0;will-change:opacity}
+#bg .cd{background:#6062ba}
+#bg .cn{background:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='300' height='300'%3E%3Cfilter id='g'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.9' numOctaves='2' stitchTiles='stitch' seed='9'/%3E%3CfeColorMatrix type='matrix' values='0 0 0 0 1 0 0 0 0 1 0 0 0 0 1 .114 .114 .114 0 -.114'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23g)'/%3E%3C/svg%3E") 0 0/300px 300px,var(--night)}
+/* свет фонаря на стене */
+#pool{position:fixed;left:50%;top:-62vmax;width:124vmax;height:124vmax;margin-left:-62vmax;z-index:0;background:radial-gradient(closest-side,rgba(34,40,255,.42),rgba(34,40,255,.17) 46%,rgba(34,40,255,.05) 86%,rgba(34,40,255,0));opacity:0;pointer-events:none;will-change:transform,opacity}
+/* стена спуска: кладка Подвала и название на ней. Тень с просветом под фонарём оставляет видимым только то, куда достаёт свет.
+   За кругом света тень глухая, иначе в темноте проступают прямые края самой стены (она уже экрана) */
+#world{position:fixed;inset:0;z-index:0;pointer-events:none}
+#wall{position:absolute;left:50%;top:0;opacity:0;will-change:transform,opacity;background-repeat:repeat;image-rendering:pixelated}
+#shade{position:absolute;inset:0;opacity:0;will-change:opacity;background:radial-gradient(circle var(--sr,60vh) at 50% var(--gy,180px),rgba(12,11,20,0) 0,rgba(12,11,20,.1) 32%,rgba(12,11,20,.5) 60%,rgba(12,11,20,.84) 80%,rgba(12,11,20,.96) 92%,#0c0b14 100%)}
+html.hall #world{display:none}
+#name{position:absolute;left:0;right:0;text-align:center;font-family:var(--display);text-transform:uppercase;white-space:nowrap;color:#f4f3ff;text-shadow:0 0 30px rgba(110,120,255,.6),0 0 4px rgba(12,11,20,.95),0 0 14px rgba(12,11,20,.7)}
+#name span{display:block;line-height:.9}
+/* два предложения о Подвале написаны на той же стене под названием. Под ними стена притемнена, чтобы буквы не рябили на кладке */
+#about{position:absolute;left:50%;width:min(24em,calc(100vw - 48px));transform:translateX(-50%);text-align:center;font-family:var(--display);line-height:1.28;color:#fff;text-shadow:0 0 5px rgba(12,11,20,.95),0 0 16px rgba(12,11,20,.8);text-wrap:balance}
+#about::before{content:"";position:absolute;inset:-38px -34px;z-index:-1;background:radial-gradient(closest-side,rgba(12,11,20,.78),rgba(12,11,20,.56) 62%,rgba(12,11,20,0))}
+#about p{margin:0}
+#about p+p{margin-top:.7em}
+
+main{position:relative;z-index:1}
+.top{position:fixed;left:0;right:0;top:0;z-index:5;display:flex;justify-content:space-between;align-items:center;padding-top:calc(12px + env(safe-area-inset-top,0px));padding-bottom:8px;font-family:var(--display);font-size:16px;letter-spacing:.1em;text-transform:uppercase;color:var(--ink);transition:color .4s,opacity .3s}
+.top a{color:inherit;text-decoration:none;padding:6px 2px}
+.top a:focus-visible{outline:2px solid currentColor;outline-offset:2px}
+body.night .top{color:var(--milk);background:linear-gradient(180deg,rgba(12,11,20,.72),rgba(12,11,20,0))}
+body.deep .top{opacity:0;pointer-events:none}
+
+/* фонарь: рисунок дизайнера мелким растром, свечение гладкое */
+.lt{position:absolute;width:var(--w);height:calc(var(--w)*1.6895)}
+.lt i{position:absolute;inset:0;display:block}
+html:not(.lm) .lt i{visibility:hidden}
+.lt .ir{background:var(--ironc,#141416);-webkit-mask:var(--iron) center/100% 100% no-repeat;mask:var(--iron) center/100% 100% no-repeat}
+.lt .gs{background:var(--glassc,#e6e6f4);-webkit-mask:var(--glass) center/100% 100% no-repeat;mask:var(--glass) center/100% 100% no-repeat}
+/* свечение: мягкое пятно сделано градиентом, а не размытием, его не нужно пересчитывать при движении */
+.lt .bl{inset:auto;left:50%;top:61%;width:calc(var(--w)*var(--bw,2.7));height:calc(var(--w)*var(--bh,3.1));margin:calc(var(--w)*var(--bh,3.1)/-2) 0 0 calc(var(--w)*var(--bw,2.7)/-2);background:radial-gradient(closest-side,rgba(34,40,255,.96) 0,rgba(34,40,255,.9) 26%,rgba(34,40,255,.56) 50%,rgba(34,40,255,.2) 75%,rgba(34,40,255,0) 100%)}
+#lamp{position:fixed;left:50%;top:0;z-index:2;width:var(--lw);height:calc(var(--lt) + var(--lw)*1.6895);margin-left:calc(var(--lw)/-2);transform-origin:50% 0;pointer-events:none;color:var(--ink)}
+#lamp .cord{position:absolute;left:50%;top:0;width:1px;height:calc(var(--lt) + 6px);background:currentColor;opacity:.85}
+#lamp .lt{left:0;top:var(--lt);--w:var(--lw);--ironc:#111114}
+#lamp .bm{--bw:2;--bh:2.3;opacity:0;will-change:opacity}
+#lamp .bn{opacity:0;will-change:opacity}
+#lamp .g1{background:radial-gradient(circle at 50% 62%,#fff 0,#e3e5ff 30%,#8a90ff 70%,#2228ff 100%);opacity:0;will-change:opacity}
+#lamp .sp{inset:auto;left:50%;top:62%;width:9%;height:6%;margin:-3% 0 0 -4.5%;border-radius:50%;background:#4a52ff;box-shadow:0 0 10px 3px rgba(74,82,255,.6);opacity:0}
+html.lm:not(.lit) #lamp .sp{animation:spark 1.9s steps(1) infinite}
+@keyframes spark{0%{opacity:.9}7%{opacity:0}13%{opacity:.8}17%{opacity:0}100%{opacity:0}}
+
+#street{position:relative;box-sizing:border-box;min-height:100vh;padding-top:38vh;padding-bottom:8vh;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center}
+#street h1{font-family:var(--display);font-weight:400;font-size:clamp(30px,min(9.6vw,11vh),84px);line-height:1.03;letter-spacing:.03em;text-transform:uppercase;margin:0;max-width:11em;text-wrap:balance;will-change:opacity}
+#ignite{position:absolute;left:50%;top:0;appearance:none;background:none;border:0;padding:0;cursor:pointer;border-radius:8px;-webkit-tap-highlight-color:transparent}
+#ignite:focus-visible,#door:focus-visible{outline:2px solid var(--blue);outline-offset:4px}
+/* мотыльки: сидят на стене светлыми точками, а когда фонарь подходит близко, слетаются к нему */
+.moth{position:fixed;left:0;top:0;z-index:3;width:var(--ms,18px);height:calc(var(--ms,18px)*.8);margin:calc(var(--ms,18px)*-.4) 0 0 calc(var(--ms,18px)*-.5);pointer-events:none;color:#141416;opacity:0;transition:opacity 1.2s,color .5s;will-change:transform}
+.moth::before{content:"";position:absolute;inset:-115% -85%;border-radius:50%;background:radial-gradient(closest-side,rgba(70,80,255,.85),rgba(34,40,255,.36) 52%,rgba(34,40,255,0))}
+.moth.on{opacity:1}
+body.night .moth{color:#f1f2ff}
+.moth i{position:absolute;top:0;width:50%;height:100%;background:currentColor;animation:mrest 1.7s ease-in-out infinite alternate}
+.moth .wr{left:50%;transform-origin:0 50%;clip-path:polygon(0 34%,14% 10%,58% 0,100% 10%,96% 40%,72% 54%,88% 74%,66% 100%,24% 92%,0 66%)}
+.moth .wl{right:50%;transform-origin:100% 50%;clip-path:polygon(100% 34%,86% 10%,42% 0,0 10%,4% 40%,28% 54%,12% 74%,34% 100%,76% 92%,100% 66%)}
+.moth u{position:absolute;left:50%;top:12%;width:14%;height:76%;margin-left:-7%;border-radius:50%;background:currentColor}
+.moth.fly i{animation:mflap .1s ease-in-out infinite alternate}
+@keyframes mrest{from{transform:scaleX(1)}to{transform:scaleX(.7)}}
+@keyframes mflap{from{transform:scaleX(1)}to{transform:scaleX(.16)}}
+html:not(.js) .moth{display:none}
+
+#descent{position:relative;min-height:220vh}
+
+/* шкаф: гравюра с настоящего шкафа Подвала. Дверца висит на петлях справа и открывается на зрителя, за ней темно и горят огни зала */
+#room{position:absolute;left:0;right:0;pointer-events:none}
+#stage{position:sticky;top:0;height:100vh;overflow:hidden}
+#scene{position:absolute;left:50%;transform-origin:50.45% 48.6%;will-change:transform,opacity}
+#scene::before{content:"";position:absolute;left:7%;right:7%;top:5%;bottom:0;background:#0a0a16;box-shadow:0 0 26px 20px rgba(10,10,22,.88)}
+#wcv{position:relative;display:block;width:100%;height:100%;image-rendering:pixelated}
+#door{position:absolute;appearance:none;background:none;border:0;padding:0;margin:0;cursor:pointer;border-radius:4px;pointer-events:auto;-webkit-tap-highlight-color:transparent}
+html.hall #room{display:none}
+/* огни зала, как они видны из шкафа */
+#far{position:fixed;inset:0;z-index:3;pointer-events:none;opacity:0}
+#far.show{opacity:1}
+#far.fade{transition:opacity .5s}
+.fl{position:absolute;left:0;top:0;transform-origin:50% 62%;will-change:transform}
+
+/* зал */
+#afisha{position:relative;box-sizing:border-box;overflow:hidden;overflow:clip;min-height:100vh;padding-bottom:64px;display:flex;flex-direction:column;align-items:center;color:var(--milk)}
+html.js #afisha:not(.in),html.js #more:not(.in){visibility:hidden;pointer-events:none}
+html:not(.js) #afisha,html:not(.js) #more{background:var(--night)}
+/* экран вечера виден только в зале и только когда вечер выбран */
+html.js #afisha:not(.picked) #slide{visibility:hidden}
+/* свод и стена зала нарисованы один раз, уже освещёнными: свет идёт от горящих фонарей афиши */
+#vcv{position:absolute;left:0;top:0;width:100%;height:var(--vh,30vh);display:block;pointer-events:none;image-rendering:pixelated;transition:opacity 1.1s .1s}
+/* стена: синяя, с кружевным узором, как в Подвале */
+#lcv{position:absolute;left:50%;display:block;pointer-events:none;transition:opacity 1.1s .1s}
+#wglow{position:absolute;left:0;right:0;top:0;pointer-events:none;transition:opacity 1.1s .1s}
+.selpool{position:absolute;left:0;top:0;width:620px;height:620px;margin:-310px 0 0 -310px;border-radius:50%;background:radial-gradient(closest-side,rgba(34,40,255,.34),rgba(34,40,255,.12) 55%,rgba(34,40,255,0));pointer-events:none;opacity:0;transition:opacity .8s}
+#afisha.lit .selpool{opacity:1}
+
+/* огни: по фонарю на вечер, выходные держатся вместе */
+.lamps{position:relative;display:flex;flex-wrap:wrap;justify-content:center;gap:16px var(--gg,24px);width:100%;margin-top:var(--lampsTop,24vh)}
+.wk{display:flex}
+.lamp{position:relative;appearance:none;background:none;border:0;padding:0 0 4px;margin:0;width:var(--cw,84px);font:inherit;color:var(--milk-2);cursor:pointer;display:flex;flex-direction:column;align-items:center;border-radius:6px;-webkit-tap-highlight-color:transparent}
+.lamp .spot{position:relative;display:block;width:100%;height:calc(var(--cw,84px)*.74*1.6895 + 4px)}
+.lamp .lt{left:13%;top:0;--w:calc(var(--cw,84px)*.74);pointer-events:none}
+.lamp .gs,.lamp .ir{z-index:1}
+.lamp .day{font-size:14px;line-height:1.3;white-space:nowrap;margin-top:6px;transition:color .3s,opacity .9s .15s}
+.lamp .kind{font-family:var(--display);font-size:11px;line-height:1.45;letter-spacing:.13em;text-transform:uppercase;white-space:nowrap;color:var(--milk-3);transition:color .3s,opacity .9s .15s}
+.lamps.tight .mo{display:none}
+.lamp.r0::before{content:"";position:absolute;left:50%;bottom:100%;width:1px;height:var(--cord,48px);background:linear-gradient(180deg,rgba(185,184,214,0),rgba(185,184,214,.55));transition:opacity .9s .15s}
+.lamp.off{color:var(--milk-3)}
+.lamp.off .kind{color:#605e82}
+.lamp.off .lt,.fl.off{--ironc:rgba(133,131,168,.46);--glassc:rgba(133,131,168,.13)}
+.lamp.on .lt,.fl.on{--ironc:#07070d;--glassc:radial-gradient(circle at 50% 64%,#fff 0,#d9dcff 26%,#7d84ff 62%,#2228ff 100%)}
+.lamp .bl,.fl .bl{opacity:.86;transition:transform .7s cubic-bezier(.3,.7,.2,1)}
+.lamp.on .bl{animation:flick 3.1s ease-in-out infinite;animation-delay:calc(var(--i)*-.37s)}
+.lamp[aria-selected="true"]{color:#fff}
+.lamp[aria-selected="true"] .kind{color:var(--milk-2)}
+.lamp.on[aria-selected="true"] .lt{--glassc:radial-gradient(circle at 50% 64%,#fff 0,#fff 38%,#c3c7ff 70%,#5a62ff 100%)}
+.lamp.on[aria-selected="true"] .bl{transform:scale(1.55)}
+.lamp:focus-visible{outline:2px solid var(--milk);outline-offset:2px}
+@media (hover:hover){.lamp.on:not([aria-selected="true"]):hover .bl{transform:scale(1.22)}.lamp:hover{color:#fff}.lamp.off:hover .lt{--ironc:rgba(160,158,196,.66)}}
+@keyframes flick{0%{opacity:.8}18%{opacity:.92}31%{opacity:.72}47%{opacity:.9}63%{opacity:.78}82%{opacity:.93}100%{opacity:.8}}
+/* при входе зал проступает вокруг уже горящих огней, по ним пробегает волна */
+html.js #afisha:not(.in) #vcv,html.js #afisha:not(.in) #lcv,html.js #afisha:not(.in) #wglow,html.js #afisha:not(.in) .lamp .day,html.js #afisha:not(.in) .lamp .kind,html.js #afisha:not(.in) .lamp.r0::before{opacity:0;transition:none}
+#afisha.in .lamp.on .gs{animation:wave .7s ease-out calc(var(--i)*80ms + 350ms) 1 backwards}
+@keyframes wave{0%{filter:brightness(1)}45%{filter:brightness(1.9) drop-shadow(0 0 14px rgba(201,200,255,.9))}100%{filter:brightness(1)}}
+
+/* экран вечера: стоит на кружевной стене, она видна вокруг него. Сама плашка почти глухая, чтобы текст не рябил на узоре */
+#slide{position:relative;box-sizing:border-box;width:100%;max-width:clamp(620px,46vw,780px);margin-top:var(--gap,40px);padding:30px 40px 30px;min-height:240px;display:flex;flex-direction:column;justify-content:center;text-align:center;color:var(--milk);border:1px solid rgba(236,238,251,.38);background:rgba(11,10,22,.93);touch-action:pan-y}
+#slide .when{font-size:15px;letter-spacing:.02em;margin:0;color:var(--milk-2)}
+#slide h2{font-family:var(--display);font-weight:400;font-size:clamp(28px,4.2vw,44px);line-height:1.08;margin:10px 0 0;color:#fff;text-wrap:balance}
+#slide .desc{font-size:16px;line-height:1.5;margin:12px auto 0;max-width:32em;color:var(--milk-2)}
+#slide .act{margin-top:22px;display:flex;flex-wrap:wrap;justify-content:center;align-items:center;gap:12px 20px;font-size:15px;color:var(--milk-2)}
+#slide.off h2{color:var(--milk-2)}
+#slide.off .desc{color:var(--milk-3)}
+.cta{appearance:none;border:1px solid var(--milk);border-radius:0;background:var(--milk);color:#100f19;font-family:var(--display);font-size:13px;letter-spacing:.16em;text-transform:uppercase;padding:13px 20px;cursor:pointer;transition:background .2s,color .2s}
+.cta:hover{background:transparent;color:var(--milk)}
+.cta:focus-visible{outline:2px solid #fff;outline-offset:3px}
+
+/* запись */
+.plate{position:relative;box-sizing:border-box;width:100%;max-width:470px;margin-top:26px;padding:28px 30px 30px;color:var(--milk);text-align:left;border:1px solid rgba(236,238,251,.38);background:rgba(11,10,22,.94)}
+.plate h3{font-family:var(--display);font-weight:400;font-size:28px;line-height:1.1;margin:0;color:#fff}
+.plate p{margin:8px 0 0;color:var(--milk-2)}
+.plate label.f{display:block;font-size:14px;margin:16px 0 5px;color:var(--milk-2)}
+.plate input[type=text]{box-sizing:border-box;width:100%;font:inherit;font-size:16px;padding:10px 11px;border:1px solid rgba(236,238,251,.3);border-radius:0;background:rgba(255,255,255,.04);color:#fff}
+.plate input[type=text]:focus-visible{outline:2px solid #fff;outline-offset:1px}
+.plate .check{display:flex;gap:10px;align-items:flex-start;font-size:14px;margin-top:16px;color:var(--milk-2)}
+.plate .check input{margin:3px 0 0;flex:none;width:16px;height:16px;accent-color:var(--blue)}
+.plate .err{color:#ffc9c9;font-size:13px;margin:5px 0 0}
+.plate .note{font-size:13px;color:var(--milk-3);margin:14px 0 0}
+.plate .cta{margin-top:20px}
+
+#more{position:relative;box-sizing:border-box;color:var(--milk);text-align:center;padding-block:44px 80px;display:flex;flex-direction:column;align-items:center;gap:14px}
+#more h2{font-family:var(--display);font-weight:400;font-size:clamp(22px,3.6vw,32px);line-height:1.15;margin:0}
+#more p{margin:0;max-width:32em;color:var(--milk-2)}
+#more a{color:#fff}
+#more .proto{font-size:13px;color:var(--milk-3);margin-top:24px}
+@media (max-width:520px){
+  #slide{padding:26px 22px 26px;min-height:236px}
+  .plate{padding:26px 22px 26px}
+  .lamp .day{font-size:13px}
+  .lamp .kind{font-size:10.5px}
+}
+@media (prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important}}
+</style>
+</head>
+<body>
+<div id="bg"><i class="cd" id="cd"></i><i class="cn" id="cn"></i></div>
+<div id="pool"></div>
+<div id="world" aria-hidden="true"><div id="wall"><div id="name"><span>Подвал</span><span>Витриоля</span></div><div id="about"><p>Кабаре на&nbsp;Почтамтской улице в&nbsp;пяти минутах от&nbsp;Исаакиевского собора.</p><p>Место, в&nbsp;котором собирается интеллектуальный андеграунд Санкт-Петербурга.</p></div></div><i id="shade"></i></div>
+<div id="lamp" aria-hidden="true"><i class="cord"></i><div class="lt"><i class="gs"></i><i class="bl bm" id="bm"></i><i class="bl bn" id="bn"></i><i class="gs g1" id="g1"></i><i class="sp"></i><i class="ir"></i></div></div>
+<header class="top gut"><a href="https://vitriolmag.ru">Витриоль</a><a href="#afisha" id="jump">Афиша</a></header>
+<main>
+<section id="street" class="gut">
+  <button type="button" id="ignite" aria-label="Зажечь фонарь"></button>
+  <h1>Следуйте за синими огнями</h1>
+</section>
+<section id="descent">
+  <h2 class="vh">Подвал Витриоля</h2>
+  <p class="vh">Кабаре на Почтамтской улице в пяти минутах от Исаакиевского собора. Место, в котором собирается интеллектуальный андеграунд Санкт-Петербурга.</p>
+  <div id="room"><div id="stage">
+    <div id="scene"><canvas id="wcv"></canvas></div>
+    <button type="button" id="door" aria-label="Открыть шкаф и войти в зал" hidden></button>
+  </div></div>
+</section>
+<section id="afisha" class="gut" aria-label="Афиша">
+  <i id="wglow"></i>
+  <canvas id="lcv"></canvas>
+  <canvas id="vcv"></canvas>
+  <i class="selpool" id="selpool"></i>
+  <div class="lamps" id="lamps" role="tablist" aria-label="Вечера Подвала на месяц вперёд"></div>
+  <article id="slide" role="tabpanel">
+    <p class="when" id="s-when"></p>
+    <h2 id="s-title"></h2>
+    <p class="desc" id="s-desc"></p>
+    <div class="act" id="s-act"><span id="facts"></span><button type="button" class="cta" id="book">Записаться</button></div>
+  </article>
+  <form id="signup" class="plate" hidden novalidate>
+    <h3>Запись на вечер</h3>
+    <p id="f-what"></p>
+    <label class="f" for="f-name">Как вас зовут</label>
+    <input type="text" id="f-name" autocomplete="name">
+    <p class="err" id="e-name" hidden>Напишите имя, чтобы мы знали, кого ждать</p>
+    <label class="f" for="f-contact">Телеграм или почта</label>
+    <input type="text" id="f-contact" autocomplete="off">
+    <p class="err" id="e-contact" hidden>Оставьте телеграм или почту, чтобы мы могли написать</p>
+    <label class="check" for="f-ok"><input type="checkbox" id="f-ok"><span>Согласен на обработку этих данных, чтобы меня записали</span></label>
+    <p class="err" id="e-ok" hidden>Без согласия мы не можем вас записать</p>
+    <button type="submit" class="cta">Записаться</button>
+    <p class="note">Адрес Подвала покажем сразу после записи.</p>
+  </form>
+  <div id="done" class="plate" hidden>
+    <h3>Вы в списке</h3>
+    <p id="d-what"></p>
+    <p><b>Адрес:</b> здесь появится адрес и как найти вход.</p>
+    <p class="note">Это прототип: запись никуда не отправилась.</p>
+  </div>
+</section>
+<section id="more" class="gut">
+  <h2>Вечера объявляем в канале Подвала</h2>
+  <p><a href="https://vitriolmag.ru">Витриоль, предзаказ первого номера</a></p>
+  <p class="proto">Прототип. Вечера выдуманы, запись никуда не отправляется.</p>
+</section>
+</main>
+<div id="moths" aria-hidden="true"></div>
+<div id="far" aria-hidden="true"><div id="farb"></div><div id="farf"></div></div>
+
+<script>
+(function(){
+'use strict';
+var doc=document,root=doc.documentElement;root.className+=' js';
+function $(i){return doc.getElementById(i)}
+var reduce=window.matchMedia&&window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+/* Вечера на месяц вперёд. В настоящем сайте этот список придёт с сервера.
+   Вечер без названия ещё не объявлен: его фонарь висит тёмным. */
+var EV=[
+ {d:'2026-11-20',kind:'лекция',time:'19:30',title:'День рождения Зинаиды Гиппиус',desc:'Читаем её дневники и письма вслух. Полтора часа с перерывом на чай.',price:'1 000 ₽'},
+ {d:'2026-11-21',kind:'кино',time:'20:00',title:'Немое кино под рояль',desc:'Фильмы 1910-х годов на стене Подвала. Тапёр играет вживую, зал сидит в темноте.',price:'1 200 ₽',left:4},
+ {d:'2026-11-22'},
+ {d:'2026-11-27',kind:'лекция',time:'19:30',title:'Башня Вячеслава Иванова',desc:'Как был устроен салон, куда приходили к полуночи и откуда расходились на рассвете.',price:'1 000 ₽'},
+ {d:'2026-11-28',kind:'читка',time:'19:00',title:'«Балаганчик» по ролям',desc:'В день рождения Блока читаем его пьесу вслух, роли раздаём на входе.',price:'800 ₽',left:11},
+ {d:'2026-11-29'},
+ {d:'2026-12-04',kind:'лекция',time:'19:30',title:'Устав „Бродячей собаки“',desc:'О кабаре, которое тоже сидело в подвале и тоже пускало не всех.',price:'1 000 ₽'},
+ {d:'2026-12-05',kind:'кино',time:'20:00',title:'Немое кино под рояль, сеанс второй',desc:'Другая программа и тот же тапёр. Места занимают быстро, потому что их тридцать.',price:'1 200 ₽'},
+ {d:'2026-12-06'},
+ {d:'2026-12-11'},{d:'2026-12-12'},{d:'2026-12-13'}
+];
+var N=EV.length;
+var WD=['вс','пн','вт','ср','чт','пт','сб'],WDN=['воскресенье','понедельник','вторник','среда','четверг','пятница','суббота'],WDA=['в воскресенье','в понедельник','во вторник','в среду','в четверг','в пятницу','в субботу'];
+var MG=['января','февраля','марта','апреля','мая','июня','июля','августа','сентября','октября','ноября','декабря'],MS=['янв','фев','мар','апр','мая','июн','июл','авг','сен','окт','ноя','дек'];
+function cap(s){return s.charAt(0).toUpperCase()+s.slice(1)}
+function dayOf(e){return e.dt.getDate()+' '+MG[e.dt.getMonth()]}
+function mest(n){var a=n%10,b=n%100;return a===1&&b!==11?'место':(a>=2&&a<=4&&(b<10||b>=20))?'места':'мест'}
+function cl(v){return v<0?0:v>1?1:v}
+function sm(v){v=cl(v);return v*v*(3-2*v)}
+function lerp(a,b,t){return a+(b-a)*t}
+
+var VW=0,VH=0,S={},G={},B={},W={th:-1};
+var st={lit:0,litOn:false,sway:0,swayV:0,lastS:-1,sel:0,first:0,shown:false,hallSeen:false,inHall:false,touched:false,lastSw:0,mx:-1,ajarOn:false,nearT:0,dir:1,scT:0,touch:false,dirty:true,anim:null,hallT:0,farOn:false,fromHall:false,px:null,py:null,theta:0,lastT:0};
+var elBg=$('bg'),elCd=$('cd'),elCn=$('cn'),elShade=$('shade'),elPool=$('pool'),elWorld=$('world'),elWall=$('wall'),elName=$('name'),elAbout=$('about'),elLamp=$('lamp'),elStreet=$('street'),elDesc=$('descent'),elAf=$('afisha'),elMore=$('more'),elIgn=$('ignite'),elDoor=$('door'),elH1=elStreet.querySelector('h1'),elRoom=$('room'),elStage=$('stage'),elScene=$('scene'),elWcv=$('wcv'),elFar=$('far'),elFarB=$('farb'),elFarF=$('farf'),elLamps=$('lamps'),elSlide=$('slide'),elAct=$('s-act'),elFacts=$('facts'),elBook=$('book'),elForm=$('signup'),elDone=$('done'),elPoolSel=$('selpool'),vCv=$('vcv'),lCv=$('lcv'),elGlow=$('wglow');
+var lBm=$('bm'),lBn=$('bn'),lG1=$('g1');
+
+/* ── гравюра в три краски. Тон 0..1 превращается в точки: до порога синие на тёмном, выше порога молочные на синем.
+      Точки стоят на сетке экрана, поэтому рисунок не рябит, когда его перерисовывают ── */
+var BAY=[0,8,2,10,12,4,14,6,3,11,1,9,15,7,13,5],THR=new Float32Array(16);
+for(var bi=0;bi<16;bi++)THR[bi]=(BAY[bi]+0.5)/16;
+var INK_BODY=0xFF160A0A,INK_BLUE=0xFFFF2822,INK_MILK=0xFFFBEEEC,INK_IN=0xFF120909,T1=0.46;
+function ink(v,x,y,dark){var t=THR[(y&3)<<2|(x&3)];return v<T1?(v/T1>t?INK_BLUE:dark):((v-T1)/(1-T1)>t?INK_MILK:INK_BLUE)}
+function load(src,cb){var im=new Image();im.onload=function(){cb(im)};im.src=src;return im}
+
+/* ── фонарь: из рисунка получаются две маски, железо и стекло ── */
+load('lantern.png',function(im){
+  var w=im.naturalWidth,h=im.naturalHeight,c=doc.createElement('canvas');c.width=w;c.height=h;var x=c.getContext('2d');x.drawImage(im,0,0);
+  var d=x.getImageData(0,0,w,h).data,a=x.createImageData(w,h),b=x.createImageData(w,h);
+  for(var i=0;i<w*h;i++){var al=d[i*4+3]/255;a.data[i*4]=a.data[i*4+1]=a.data[i*4+2]=b.data[i*4]=b.data[i*4+1]=b.data[i*4+2]=255;a.data[i*4+3]=d[i*4]*al;b.data[i*4+3]=d[i*4+1]*al}
+  x.putImageData(a,0,0);root.style.setProperty('--iron','url('+c.toDataURL()+')');
+  x.putImageData(b,0,0);root.style.setProperty('--glass','url('+c.toDataURL()+')');
+  root.classList.add('lm');st.dirty=true;
+});
+var LT_ON='<i class="bl"></i><i class="gs"></i><i class="ir"></i>',LT_OFF='<i class="gs"></i><i class="ir"></i>';
+
+/* ── стена спуска: кусок настоящей кладки, отражённый зеркально в обе стороны, чтобы повторялся без швов ── */
+var imBrick=null,imWard=null,imVault=null,imLace=null;
+load('brick.webp',function(im){imBrick=im;setTimeout(wallTile,40)});
+function wallTile(){
+  if(!imBrick||!VH)return;
+  var k=G.pitch/47.5,tw=Math.round(640*k/4)*4,th=Math.round(376*k/4)*4,W2=tw*2,H2=th*2,x,y;
+  if(G.tw!==tw){G.tw=tw;
+    var cv=doc.createElement('canvas');cv.width=W2;cv.height=H2;var c=cv.getContext('2d',{willReadFrequently:true});c.imageSmoothingQuality='high';
+    c.drawImage(imBrick,0,0,tw,th);c.save();c.translate(W2,0);c.scale(-1,1);c.drawImage(imBrick,0,0,tw,th);c.restore();
+    var p=c.getImageData(0,0,W2,th).data,id=c.createImageData(W2,H2),o=new Uint32Array(id.data.buffer);
+    for(y=0;y<th;y++)for(x=0;x<W2;x++){var v=Math.pow(p[(y*W2+x)*4]/255,1.7)*0.44,y2=H2-1-y;o[y*W2+x]=ink(v,x,y,0);o[y2*W2+x]=ink(v,x,y2,0)}
+    c.putImageData(id,0,0);elWall.style.backgroundImage='url('+cv.toDataURL()+')';elWall.style.backgroundSize=W2+'px '+H2+'px'}
+  elWall.style.backgroundPosition=Math.round(G.ww/2-tw/2)+'px 0';
+}
+
+/* ── шкаф. Картинка хранит тон (свет выровнен) и силуэт. Свет фонаря считаем сами: чем дальше от него, тем реже точки ── */
+var DOORR=[0.155,0.1195,0.8541,0.8526],SCENE_A=660/1163;
+load('ward.webp',function(im){imWard=im;rasterWard();st.dirty=true});
+function rasterWard(){
+  if(!imWard||!G.sw)return;var w=G.sw,h=G.sh;if(W.w===w&&W.h===h&&W.gy===G.gy)return;W.w=w;W.h=h;W.gy=G.gy;
+  elWcv.width=w;elWcv.height=h;var c=elWcv.getContext('2d',{willReadFrequently:true});c.imageSmoothingQuality='high';c.clearRect(0,0,w,h);c.drawImage(imWard,0,0,w,h);
+  var d=c.getImageData(0,0,w,h).data,n=w*h,i,x,y,P=new Float32Array(256),L=new Float32Array(n),lx=w/2,ly=G.gy-G.sTop,R=0.8*VH;
+  for(i=0;i<256;i++)P[i]=Math.pow(i/255,0.72)*1.15;
+  for(y=0;y<h;y++)for(x=0;x<w;x++)L[y*w+x]=0.2+0.8*(1-sm((Math.sqrt((x-lx)*(x-lx)+(y-ly)*(y-ly))/R-0.14)/0.86));
+  var xl=Math.round(DOORR[0]*w),yt=Math.round(DOORR[1]*h),xh=Math.round(DOORR[2]*w),yb=Math.round(DOORR[3]*h),lw=xh-xl,lh=yb-yt;
+  var leaf=new Uint8Array(lw*lh);for(y=0;y<lh;y++)for(x=0;x<lw;x++)leaf[y*lw+x]=d[((y+yt)*w+x+xl)*4];
+  /* корпус с пустым проёмом: его кладём под дверцу при каждой перерисовке */
+  var full=c.createImageData(w,h),body=new Uint32Array(full.data.buffer);
+  for(y=0;y<h;y++)for(x=0;x<w;x++){i=y*w+x;body[i]=d[i*4+3]<128?0:(x>=xl&&x<xh&&y>=yt&&y<yb)?INK_IN:ink(P[d[i*4]]*L[i],x,y,INK_BODY)}
+  c.putImageData(full,0,0);
+  var dx0=Math.max(0,xl-Math.ceil(lw*0.08)),dy0=Math.max(0,yt-Math.ceil(lh*0.09)),dy1=Math.min(h,yb+Math.ceil(lh*0.13));
+  W.P=P;W.L=L;W.leaf=leaf;W.body=new Uint32Array(body);W.r=[xl,yt,xh,yb,lw,lh];W.d=[dx0,dy0,xh-dx0,dy1-dy0];W.id=c.createImageData(xh-dx0,dy1-dy0);W.buf=new Uint32Array(W.id.data.buffer);W.ctx=c;W.th=-1;
+  drawDoor(st.theta);
+}
+/* дверца под углом th (градусы): каждый столбец экрана берёт свой столбец дверцы, ближний край выходит выше и ниже */
+function drawDoor(th){
+  if(!W.body)return;
+  var w=W.w,r=W.r,yt=r[1],xh=r[2],yb=r[3],lw=r[4],lh=r[5],D=W.d,dx0=D[0],dy0=D[1],dw=D[2],dh=D[3],buf=W.buf,body=W.body,P=W.P,L=W.L,leaf=W.leaf,x,y,o;
+  for(y=0;y<dh;y++){o=(y+dy0)*w+dx0;buf.set(body.subarray(o,o+dw),y*dw)}
+  var a=th*Math.PI/180,c=Math.cos(a),sn=Math.sin(a),d=9*lw,y0=yt+0.38*lh,shade=0.45+0.55*c,xf=xh-lw*c*d/(d-lw*sn),m,ya,yz;
+  for(x=Math.max(dx0,Math.ceil(xf));x<xh;x++){
+    var k=xh-x,s=k*d/(lw*(c*d+k*sn));if(s>1)s=1;m=d/(d-lw*s*sn);
+    var xs=Math.round((1-s)*(lw-1)),im=1/m;ya=Math.max(dy0,Math.ceil(y0+(yt-y0)*m));yz=Math.min(dy0+dh,Math.floor(y0+(yb-y0)*m));
+    for(y=ya;y<yz;y++){var ys=Math.round((y-y0)*im+y0-yt);if(ys<0||ys>=lh)continue;buf[(y-dy0)*dw+x-dx0]=ink(P[leaf[ys*lw+xs]]*L[y*w+x]*shade,x,y,INK_BODY)}
+  }
+  if(th>2){m=d/(d-lw*sn);var tk=Math.max(2,Math.round(0.035*lw*sn*m)),x1=Math.round(xf);ya=Math.max(dy0,Math.ceil(y0+(yt-y0)*m));yz=Math.min(dy0+dh,Math.floor(y0+(yb-y0)*m));
+    for(x=Math.max(dx0,x1-tk);x<x1;x++)for(y=ya;y<yz;y++)buf[(y-dy0)*dw+x-dx0]=ink(0.6*L[y*w+x],x,y,INK_BODY)}
+  W.ctx.putImageData(W.id,dx0,dy0);W.th=th;W.xf=xf;elScene.setAttribute('data-th',Math.round(th));
+}
+
+/* ── огни афиши: по кнопке на вечер, соседние дни собираются в одни выходные ── */
+var lamps=[],GRP=[],fars=[],farB=[];
+(function(){var prev=null,wk=null,pm=-1,seen=false;
+  for(var j=0;j<N;j++){var e=EV[j],a=e.d.split('-'),dt=new Date(+a[0],a[1]-1,+a[2]);e.dt=dt;e.on=!!e.title;
+    if(e.on&&!seen){seen=true;st.first=st.sel=j}
+    if(!prev||dt-prev>1.5*864e5){wk=doc.createElement('div');wk.className='wk';elLamps.appendChild(wk);GRP.push(0)}
+    GRP[GRP.length-1]++;prev=dt;
+    var b=doc.createElement('button'),m=dt.getMonth();b.type='button';b.className=e.on?'lamp on':'lamp off';b.id='lamp'+j;b.style.setProperty('--i',j);
+    b.setAttribute('role','tab');b.setAttribute('aria-controls','slide');
+    b.setAttribute('aria-label',WDN[dt.getDay()]+', '+dayOf(e)+', '+(e.on?e.kind+': '+e.title:'вечер ещё не объявлен'));
+    b.innerHTML='<span class="spot"><span class="lt">'+(e.on?LT_ON:LT_OFF)+'</span></span><span class="day"></span><span class="kind"></span>';
+    b.children[1].textContent=WD[dt.getDay()]+' '+dt.getDate();if(m!==pm){var mo=doc.createElement('span');mo.className='mo';mo.textContent=' '+MS[m];b.children[1].appendChild(mo)}pm=m;
+    b.children[2].textContent=e.on?e.kind:'скоро';
+    wk.appendChild(b);lamps[j]=b;
+    var f=doc.createElement('div');f.className='fl lt '+(e.on?'on':'off');f.innerHTML=LT_OFF;elFarF.appendChild(f);fars[j]=f;farB[j]=null;
+    if(e.on){var fb=doc.createElement('div');fb.className='fl lt on';fb.innerHTML='<i class="bl"></i>';elFarB.appendChild(fb);farB[j]=fb}}
+})();
+
+/* ── мотыльки. Летят всегда на самый яркий свет: кружат у фонаря, у шкафа ныряют в проём к огням зала,
+      в зале держатся у горящих фонарей афиши, двое у выбранного ── */
+var MO=[];
+(function(){var box=$('moths');for(var i=0;i<5;i++){var e=doc.createElement('div');e.className='moth';e.innerHTML='<i class="wl"></i><i class="wr"></i><u></u>';
+  e.children[0].style.animationDelay=e.children[1].style.animationDelay=(-i*0.37)+'s';box.appendChild(e);
+  MO.push({el:e,x:0,y:0,vx:0,vy:0,free:false,hx:0,hy:0,a:i*1.9,w:(i%2?-1:1)*(1.5+0.3*i),r:0.78+0.11*i,ang:0,sc:1,z:3,on:false})}})();
+function moths(dt,s,inHall,u){
+  var hero=lerp(G.hero,1,sm(s/S.night)),lx=VW/2+Math.sin(st.sway*0.01745)*(G.lt+G.lh*0.62)*hero,ly=G.gy*hero,ctx=inHall?2:u>0.1?1:0,h=dt/1000,i,k,lit=[],selOn=EV[st.sel].on&&st.shown;
+  if(ctx===2)for(k=0;k<N;k++)if(EV[k].on&&!(selOn&&k===st.sel))lit.push(k);
+  for(i=0;i<MO.length;i++){var m=MO[i],hy=i?m.hy-s:m.hy;
+    if(st.litOn!==m.on){m.on=st.litOn;m.el.classList.toggle('on',m.on)}
+    if(!m.free){var qx=m.hx-lx,qy=hy-ly;
+      /* просыпается, когда свет фонаря дошёл до него. Тот, мимо кого уже прошли, догоняет сверху */
+      if(!reduce&&st.lit>0.5&&(ctx>0||!i||hy<ly||qx*qx+qy*qy<G.wake*G.wake)){m.free=true;m.el.classList.add('fly');m.x=m.hx;m.y=Math.max(-40,Math.min(VH+40,hy));m.vx=m.vy=0}
+      else{m.el.style.transform='translate('+m.hx.toFixed(1)+'px,'+hy.toFixed(1)+'px) scale(.85)';continue}}
+    m.a+=m.w*h;var cx,cy,R,z=4,sc=1;
+    if(ctx===0){cx=lx;cy=ly;R=G.lw*hero*0.8*m.r;z=Math.sin(m.a)>0?3:1;sc=1+0.13*Math.sin(m.a)}
+    else if(ctx===1){cx=st.gx;cy=st.gy;R=(8+64*st.gf)*m.r;sc=lerp(0.5,B.msc,st.gf)}
+    else{var j=!lit.length||(selOn&&i<2)?st.sel:lit[(i-(selOn?2:0))%lit.length];cx=B.PX[j];cy=B.PY[j]-(s-S.hall);R=B.w*0.62*m.r;sc=B.msc}
+    var tx=cx+R*Math.cos(m.a),ty=cy+R*0.42*Math.sin(m.a)+R*0.3*Math.sin(m.a*1.7+i);
+    m.vx+=(26*(tx-m.x)-6*m.vx)*h;m.vy+=(26*(ty-m.y)-6*m.vy)*h;
+    var sp=Math.sqrt(m.vx*m.vx+m.vy*m.vy);if(sp>1100){m.vx*=1100/sp;m.vy*=1100/sp}
+    m.x+=m.vx*h;m.y+=m.vy*h;
+    if(sp>24){var d=Math.atan2(m.vy,m.vx)+1.5708-m.ang;m.ang+=Math.atan2(Math.sin(d),Math.cos(d))*Math.min(1,h*12)}
+    m.sc+=(sc-m.sc)*Math.min(1,h*5);if(z!==m.z){m.z=z;m.el.style.zIndex=z}
+    m.el.style.transform='translate('+m.x.toFixed(1)+'px,'+m.y.toFixed(1)+'px) rotate('+m.ang.toFixed(2)+'rad) scale('+m.sc.toFixed(2)+')';
+  }
+}
+
+/* Вехи пути в пикселях прокрутки: night — стемнело, room — шкаф встал на место,
+   door — дверца пошла, hall — зал. Между door и hall страница сама доводит до конца. */
+function build(){
+  VW=root.clientWidth;VH=window.innerHeight;
+  S.night=0.8*VH;S.room=2.3*VH;S.door=S.room+0.12*VH;S.hall=S.room+0.9*VH;
+  elStreet.style.minHeight=VH+'px';elStreet.style.height=VH+'px';elDesc.style.minHeight=(S.hall-VH)+'px';elDesc.style.height=(S.hall-VH)+'px';
+  /* прокрутку считаем от верха первой секции: над ней у страницы бывает отступ под вырез экрана */
+  G.base=Math.max(0,Math.round(elStreet.getBoundingClientRect().top+(window.pageYOffset||0)));
+  /* фонарь: на улице он крупнее, к подвалу становится своего размера */
+  G.lw=Math.min(150,0.166*VH,0.36*VW);G.lt=36;G.lh=G.lw*1.6895;G.gy=G.lt+G.lh*0.62;G.hero=1.25;
+  root.style.setProperty('--lw',G.lw.toFixed(1)+'px');
+  elIgn.style.width=(G.lw*G.hero)+'px';elIgn.style.height=((G.lt+G.lh)*G.hero)+'px';elIgn.style.marginLeft=(-G.lw*G.hero/2)+'px';
+  /* мотыльки: один прилетает из-за края, когда зажгут фонарь, один сидит внизу улицы, три на спуске по обе стороны пути.
+     Места заданы от верха страницы */
+  var mdx=Math.min(64,VW*0.12);G.ms=Math.max(15,Math.min(24,VH*0.022));G.wake=0.36*VH;root.style.setProperty('--ms',G.ms.toFixed(1)+'px');
+  MO[0].hx=VW+60;MO[0].hy=-60;MO[1].hx=VW/2;MO[1].hy=VH*0.94;MO[2].hx=VW/2-mdx;MO[2].hy=VH*1.22;MO[3].hx=VW/2+mdx;MO[3].hy=VH*2.0;MO[4].hx=VW/2-mdx*0.5;MO[4].hy=VH*2.26;
+  if(st.gx===undefined){st.gx=VW/2;st.gy=VH/2;st.gf=0}
+  /* стена и свет на ней */
+  G.sr=Math.round(Math.max(0.66*VH,300));G.wy0=Math.round(0.4*VH);G.ww=Math.min(VW,2*G.sr+40);G.pitch=Math.max(34,Math.min(60,VH*0.05));
+  root.style.setProperty('--sr',G.sr+'px');root.style.setProperty('--gy',G.gy.toFixed(1)+'px');
+  elWall.style.width=G.ww+'px';elWall.style.marginLeft=(-G.ww/2)+'px';elWall.style.height=Math.ceil(S.room+VH-G.wy0)+'px';
+  /* название: две строки одной ширины, как набор афиши */
+  var bw=Math.min(VW*(VW<600?0.86:0.6),VH*1.25),c=doc.createElement('canvas').getContext('2d');c.font='100px Forum, Georgia, serif';
+  var m1=c.measureText('ПОДВАЛ').width/100,m2=c.measureText('ВИТРИОЛЯ').width/100,f1=bw/m1,f2=bw/m2,hh=(f1+f2)*0.9;if(hh>VH*0.5){var k=VH*0.5/hh;f1*=k;f2*=k;hh=VH*0.5}
+  elName.children[0].style.fontSize=f1+'px';elName.children[1].style.fontSize=f2+'px';elName.style.top=(VH*1.62-hh/2-G.wy0)+'px';
+  /* шкаф: стоит у низа экрана, карниз сразу под фонарём */
+  elRoom.style.top=(S.room-VH)+'px';elRoom.style.height=(S.hall-S.room+VH)+'px';elStage.style.height=VH+'px';
+  G.sh=Math.round(Math.max(170,Math.min(VH-G.lt-G.lh+2,(VW-12)/SCENE_A)));G.sw=Math.round(G.sh*SCENE_A);G.sTop=VH-G.sh-6;G.sLeft=Math.round(VW/2-G.sw/2);
+  elScene.style.width=G.sw+'px';elScene.style.height=G.sh+'px';elScene.style.marginLeft=(-G.sw/2)+'px';elScene.style.top=G.sTop+'px';
+  elDoor.style.left=(G.sLeft+G.sw*DOORR[0])+'px';elDoor.style.top=(G.sTop+G.sh*DOORR[1])+'px';elDoor.style.width=(G.sw*(DOORR[2]-DOORR[0]))+'px';elDoor.style.height=(G.sh*(DOORR[3]-DOORR[1]))+'px';
+  /* описание под названием. Два нижних мотылька сидят под ним, но выше шкафа */
+  elAbout.style.fontSize=Math.max(16,Math.min(30,VH*0.031,VW*0.058)).toFixed(1)+'px';
+  var at=VH*1.62+hh/2+VH*0.07,ab=at+elAbout.offsetHeight,mmax=S.room+G.sTop-VH*0.06;elAbout.style.top=(at-G.wy0)+'px';
+  MO[3].hy=Math.min(ab+VH*0.07,mmax-VH*0.1);MO[4].hy=Math.min(ab+VH*0.2,mmax);
+  rasterWard();wallTile();
+  buildHall();
+  st.dirty=true;
+}
+
+/* ── зал ── */
+function lights(){var a=[];for(var j=0;j<N;j++)if(EV[j].on)a.push(B.PX[j],B.PY[j]);return a}
+/* Свод: широкая полоса со снимка зала, кирпичные своды между чёрными балками уходят к дальней стене.
+   На широком экране полоса видна целиком, на узком берём её часть вокруг точки, куда сходятся балки. */
+load('vault.webp',function(im){imVault=im;rasterVault()});
+function rasterVault(){
+  if(!imVault||!B.vh)return;var w=VW,h=B.vh,key=w+'x'+h+B.key;if(vCv._k===key)return;vCv._k=key;
+  var iw=imVault.naturalWidth,ih=imVault.naturalHeight,ia=iw/ih,A=w/h,sx=0,sy=0,sw=iw,sh=ih;
+  if(A<=ia){sw=ih*A;sx=Math.max(0,Math.min(iw-sw,iw*0.565-sw/2))}else{sh=ih*Math.max(0.6,Math.min(1,ia*1.3/A));sy=ih-sh}
+  vCv.width=w;vCv.height=h;var c=vCv.getContext('2d',{willReadFrequently:true});c.imageSmoothingQuality='high';c.drawImage(imVault,sx,sy,sw,sh,0,0,w,h);
+  var id=c.getImageData(0,0,w,h),p=id.data,o=new Uint32Array(p.buffer),n=w*h,i,x,y,k,hist=new Uint32Array(256),T=new Uint8Array(n);
+  for(i=0;i<n;i++){var v=(p[i*4]*77+p[i*4+1]*150+p[i*4+2]*29)>>8;T[i]=v;hist[v]++}
+  var cut=n*0.01,acc=0,lo=0,hi=255;for(;lo<255;lo++){acc+=hist[lo];if(acc>cut)break}acc=0;for(;hi>0;hi--){acc+=hist[hi];if(acc>cut)break}
+  var rng=Math.max(1,hi-lo),lut=new Float32Array(256);for(i=0;i<256;i++)lut[i]=Math.pow(cl((i-lo)/rng),1.25);
+  var ls=lights(),nl=ls.length,R=Math.max(h*1.1,320),R2=R*R;
+  for(y=0;y<h;y++){var fy=(0.6+0.4*cl(y/(0.24*h)))*(1-sm((y/h-0.6)/0.4));
+    for(x=0;x<w;x++){var Lg=0;for(k=0;k<nl;k+=2){var dx=x-ls[k],dy=y-ls[k+1],q=(dx*dx+dy*dy)/R2;if(q<1)Lg+=(1-q)*(1-q)}
+      i=y*w+x;o[i]=ink(lut[T[i]]*fy*(0.2+0.64*(Lg>1?1:Lg)),x,y,0)}}
+  c.putImageData(id,0,0);
+}
+/* Кружево: узор снят с синей стены Подвала. Светлее там, куда достают горящие фонари, но видно на всей стене */
+load('lace.webp',function(im){imLace=im;rasterLace()});
+function rasterLace(){
+  if(!imLace||!B.vh)return;var Wl=Math.min(VW,1500),Hl=B.wallH,key=Wl+'x'+Hl+B.key;if(lCv._k===key)return;lCv._k=key;
+  var sc=Math.min(2,window.devicePixelRatio||1,Math.sqrt(2.0e6/(Wl*Hl))),w=Math.round(Wl*sc),h=Math.round(Hl*sc);
+  lCv.width=w;lCv.height=h;lCv.style.width=Wl+'px';lCv.style.height=Hl+'px';lCv.style.marginLeft=(-Wl/2)+'px';lCv.style.top=B.wallTop+'px';
+  var c=lCv.getContext('2d',{willReadFrequently:true}),iw=imLace.naturalWidth,ih=imLace.naturalHeight,cy0=Math.round(ih*0.1),dw=Math.max(Wl/2,640)*sc,dh=dw*(ih-cy0)/iw,ty;
+  c.fillStyle='#000';c.fillRect(0,0,w,h);c.imageSmoothingQuality='high';
+  for(ty=0;ty<h;ty+=dh){c.drawImage(imLace,0,cy0,iw,ih-cy0,w/2,ty,dw,dh);c.save();c.translate(w/2,0);c.scale(-1,1);c.drawImage(imLace,0,cy0,iw,ih-cy0,0,ty,dw,dh);c.restore()}
+  var id=c.getImageData(0,0,w,h),p=id.data,ls=lights(),nl=ls.length,R=Math.max(340,0.66*VH),R2=R*R,x0=(VW-Wl)/2,y0=B.wallTop,x,y,i,k;
+  for(y=0;y<h;y++){var Y=y/sc,fy=sm(Y/50)*(1-sm((Y-(Hl-140))/140));
+    for(x=0;x<w;x++){i=(y*w+x)*4;var lum=p[i];if(!lum||!fy){p[i+3]=0;continue}
+      var X=x/sc+x0,Lg=0;for(k=0;k<nl;k+=2){var dx=X-ls[k],dy=Y+y0-ls[k+1],q=(dx*dx+dy*dy)/R2;if(q<1)Lg+=(1-q)*(1-q)}
+      var fx=Wl<VW?sm(x/sc/110)*sm((Wl-x/sc)/110):1,a=lum*(0.36+0.8*(Lg>1?1:Lg))*fy*fx*0.56;
+      p[i]=150;p[i+1]=156;p[i+2]=255;p[i+3]=a>255?255:a}}
+  c.putImageData(id,0,0);
+}
+function wallGlow(){
+  var ls=lights(),R=Math.round(Math.max(250,0.42*VH)),g=[],maxY=0;
+  for(var k=0;k<ls.length;k+=2){g.push('radial-gradient(circle '+R+'px at '+Math.round(ls[k])+'px '+Math.round(ls[k+1])+'px,rgba(34,40,255,.16),rgba(34,40,255,.06) 50%,rgba(34,40,255,0))');if(ls[k+1]>maxY)maxY=ls[k+1]}
+  elGlow.style.height=Math.round(maxY+R+10)+'px';elGlow.style.backgroundImage=g.join(',');
+}
+function buildHall(){
+  /* сколько выходных встаёт в ряд и какого размера фонари: ряды делим поровну */
+  var cs=getComputedStyle(elAf),avail=elAf.clientWidth-parseFloat(cs.paddingLeft)-parseFloat(cs.paddingRight),Gn=GRP.length,gg=VW<600?16:28,minC=VW<600?44:(VH<520?56:68),maxC=VW<600?72:(VW<2200?96:120),n=Gn,per=N,cw=maxC,rows,a,b2,c,j;
+  for(rows=1;rows<=Gn;rows++){n=Math.ceil(Gn/rows);per=0;for(a=0;a<Gn;a+=n){c=0;for(b2=a;b2<Math.min(Gn,a+n);b2++)c+=GRP[b2];if(c>per)per=c}
+    cw=Math.floor((avail-(n-1)*gg)/per);if(cw>=minC||n===1)break}
+  if(cw>maxC)cw=maxC;
+  /* свод: на телефоне треть экрана, на широком экране выше */
+  var vh=Math.round(VW<700?Math.min(VW*0.716,VH*0.33):VH*0.4);B.vh=vh;
+  elAf.style.setProperty('--vh',vh+'px');elAf.style.setProperty('--cw',cw+'px');elAf.style.setProperty('--gg',gg+'px');
+  elAf.style.setProperty('--lampsTop',Math.round(vh*0.74)+'px');elAf.style.setProperty('--cord',Math.round(vh*0.2)+'px');elAf.style.setProperty('--gap',(VH<620?26:VW<600?38:46)+'px');
+  elLamps.style.maxWidth=(per*cw+(n-1)*gg+2)+'px';elLamps.className=cw<52?'lamps tight':'lamps';
+  /* места фонарей относительно верха зала */
+  B.w=cw*0.74;B.h=B.w*1.6895;B.PX=[];B.PY=[];elFar.style.setProperty('--w',B.w+'px');
+  var ar=elAf.getBoundingClientRect(),t0=lamps[0].getBoundingClientRect().top,sy=0;
+  for(j=0;j<N;j++){var r=lamps[j].getBoundingClientRect();B.PX[j]=r.left-ar.left+r.width/2;B.PY[j]=r.top-ar.top+B.h*0.62;lamps[j].classList.toggle('r0',r.top<t0+4);sy+=B.PY[j]}
+  B.msc=Math.max(0.62,Math.min(1,B.w/62));B.cx=VW/2;B.cy=sy/N;B.span=0;for(j=0;j<N;j++)B.span=Math.max(B.span,Math.abs(B.PX[j]-B.cx));
+  /* стена с кружевом начинается под подписями фонарей и идёт до низа зала */
+  B.wallTop=Math.round(elLamps.getBoundingClientRect().bottom-ar.top+2);B.wallH=Math.round(Math.max(300,Math.min(1100,ar.height-B.wallTop)));
+  B.key=':'+cw+':'+Math.round(B.PX[0])+':'+Math.round(B.PY[N-1])+':'+B.wallTop;
+  rasterVault();rasterLace();wallGlow();
+  st.px=null;placeSel();
+}
+function applyPool(){elPoolSel.style.transform='translate('+st.px.toFixed(1)+'px,'+st.py.toFixed(1)+'px)'}
+function placeSel(){
+  var j=st.sel,on=EV[j].on&&st.shown;elAf.classList.toggle('lit',!!on);
+  if(st.px===null||reduce){st.px=B.PX[j];st.py=B.PY[j];applyPool()}
+  st.dirty=true;
+}
+
+/* ── афиша: выбор вечера, запись ── */
+function whenOf(e){return WDA[e.dt.getDay()]+', '+dayOf(e)+', в '+e.time}
+function showEvent(){
+  var e=EV[st.sel];
+  $('s-when').textContent=e.on?cap(e.kind)+' '+whenOf(e):cap(WDN[e.dt.getDay()])+', '+dayOf(e);
+  $('s-title').textContent=e.on?e.title:'Вечер ещё не объявлен';
+  $('s-desc').textContent=e.on?e.desc:'Анонс появится в канале Подвала.';
+  elSlide.className=e.on?'':'off';
+  elFacts.textContent=e.on?e.price+(e.left?', осталось '+e.left+' '+mest(e.left):''):'';
+  elAct.hidden=!e.on;
+  for(var i=0;i<N;i++){lamps[i].setAttribute('aria-selected',i===st.sel?'true':'false');lamps[i].tabIndex=i===st.sel?0:-1}
+  elSlide.setAttribute('aria-labelledby','lamp'+st.sel);
+  elForm.hidden=true;elDone.hidden=true;
+}
+function pick(i,t,user){
+  st.sel=i;st.shown=true;st.lastSw=t;if(user)st.touched=true;
+  showEvent();elAf.classList.add('picked');placeSel();
+  if(!reduce){elSlide.style.transition='none';elSlide.style.filter='blur(9px)';elSlide.style.opacity='.2';void elSlide.offsetWidth;elSlide.style.transition='filter .9s cubic-bezier(.2,.7,.2,1),opacity .6s';elSlide.style.filter='none';elSlide.style.opacity='1'}
+  if(user){var r=elSlide.getBoundingClientRect();if(r.bottom>VH+4)elSlide.scrollIntoView({behavior:reduce?'auto':'smooth',block:'nearest'})}
+}
+function nextOn(dir){var i=st.sel;for(var k=0;k<N;k++){i=(i+dir+N)%N;if(EV[i].on)return i}return st.sel}
+lamps.forEach(function(b,i){b.addEventListener('click',function(){pick(i,performance.now(),true)})});
+elLamps.addEventListener('keydown',function(ev){var k=ev.key;if(k!=='ArrowRight'&&k!=='ArrowLeft')return;ev.preventDefault();var i=(st.sel+(k==='ArrowRight'?1:N-1))%N;pick(i,performance.now(),true);lamps[i].focus()});
+var tx0=null;
+elSlide.addEventListener('touchstart',function(ev){tx0=ev.touches[0].clientX},{passive:true});
+elSlide.addEventListener('touchend',function(ev){if(tx0===null)return;var dx=ev.changedTouches[0].clientX-tx0;tx0=null;if(Math.abs(dx)>48)pick(nextOn(dx<0?1:-1),performance.now(),true)},{passive:true});
+elBook.addEventListener('click',function(){st.touched=true;var e=EV[st.sel];if(!e.on)return;
+  $('f-what').textContent=e.title+', '+WDN[e.dt.getDay()]+', '+dayOf(e)+', '+e.time;elForm.hidden=false;elDone.hidden=true;$('f-name').focus({preventScroll:true});elForm.scrollIntoView({behavior:reduce?'auto':'smooth',block:'nearest'})});
+function bad(id,cond){$(id).hidden=!cond;return cond}
+elForm.addEventListener('submit',function(ev){ev.preventDefault();
+  var n=bad('e-name',!$('f-name').value.trim()),c=bad('e-contact',!$('f-contact').value.trim()),o=bad('e-ok',!$('f-ok').checked);
+  if(n){$('f-name').focus();return}if(c){$('f-contact').focus();return}if(o){$('f-ok').focus();return}
+  var e=EV[st.sel];$('d-what').textContent=$('f-name').value.trim()+', ждём вас '+whenOf(e)+'.';elForm.hidden=true;elDone.hidden=false});
+['f-name','f-contact'].forEach(function(id){$(id).addEventListener('input',function(){$('e-'+id.slice(2)).hidden=true})});
+$('f-ok').addEventListener('change',function(){$('e-ok').hidden=true});
+
+/* ── действия ── */
+function ignite(){if(st.litOn)return;st.litOn=true;root.classList.add('lit');st.dirty=true}
+elIgn.addEventListener('click',ignite);
+setTimeout(ignite,3600);
+function scrollAnim(to,dur){
+  if(reduce){window.scrollTo(0,to);return}
+  var from=window.pageYOffset,t0=performance.now();st.anim=function(t){var u=cl((t-t0)/dur);u=u<0.5?2*u*u:1-Math.pow(-2*u+2,2)/2;window.scrollTo(0,from+(to-from)*u);if(u>=1)st.anim=null};
+}
+function stopAnim(){st.anim=null;st.scT=performance.now()}
+window.addEventListener('wheel',stopAnim,{passive:true});
+window.addEventListener('touchstart',function(){st.touch=true;stopAnim()},{passive:true});
+function touchOff(){st.touch=false;st.scT=performance.now()}
+window.addEventListener('touchend',touchOff,{passive:true});window.addEventListener('touchcancel',touchOff,{passive:true});
+elDoor.addEventListener('click',function(){st.dir=1;scrollAnim(G.base+Math.ceil(S.hall)+1,2800)});
+function jump(){ignite();st.lit=1;window.scrollTo(0,G.base+Math.ceil(S.hall)+1);st.dirty=true}
+$('jump').addEventListener('click',function(ev){ev.preventDefault();jump()});
+window.addEventListener('hashchange',function(){if(location.hash==='#afisha')jump()});
+window.addEventListener('scroll',function(){st.dirty=true},{passive:true});
+window.addEventListener('pointermove',function(ev){st.mx=ev.clientX},{passive:true});
+var rz=null,lastW=0,lastH=0;
+window.addEventListener('resize',function(){clearTimeout(rz);rz=setTimeout(function(){var w=root.clientWidth,h=window.innerHeight;if(w===lastW&&Math.abs(h-lastH)<130)return;lastW=w;lastH=h;var k=Math.max(0,window.pageYOffset-G.base)/(S.hall||1);build();window.scrollTo(0,G.base+k*S.hall)},180)});
+
+var last={};
+function set(el,prop,val){var k=el.id+prop;if(last[k]===val)return;last[k]=val;el.style[prop]=val}
+function frame(t){
+  requestAnimationFrame(frame);
+  if(doc.hidden||!VW)return;
+  if(st.anim)st.anim(t);
+  var s=Math.max(0,(window.pageYOffset||0)-G.base),moving=false,j,dt=Math.min(64,t-(st.lastT||t));st.lastT=t;
+  if(s>8&&!st.litOn)ignite();
+  var lt=st.litOn?1:0;if(Math.abs(lt-st.lit)>0.004){st.lit=reduce?lt:st.lit+(lt-st.lit)*0.06;moving=true}else st.lit=lt;
+  var ds=s-(st.lastS<0?s:st.lastS);if(ds!==0){moving=true;st.scT=t;if(!st.anim)st.dir=ds>0?1:-1}st.lastS=s;
+  /* фонарь покачивается от прокрутки и за курсором */
+  if(!reduce){var tgt=st.mx>=0?(st.mx/VW-0.5)*2.2:0;st.swayV+=(tgt-st.sway)*0.02-st.swayV*0.09-ds*0.012;st.sway+=st.swayV;if(st.sway>9)st.sway=9;if(st.sway<-9)st.sway=-9;if(Math.abs(st.swayV)>0.004)moving=true}
+  /* шкаф приоткрывается сам, если возле него остановиться */
+  var near=s>S.room-VH*0.1&&s<S.door+2;
+  if(near){if(!st.nearT)st.nearT=t;if((t-st.nearT>900||reduce)&&!st.ajarOn){st.ajarOn=true;moving=true}}else st.nearT=0;
+  /* в проёме страница не зависает: доводим до зала или обратно к шкафу */
+  if(!reduce&&!st.anim&&!st.touch&&s>S.door+1&&s<S.hall-1&&t-st.scT>260){var back=st.dir<0&&(s-S.door)<(S.hall-S.door)*0.7;scrollAnim(G.base+(back?Math.floor(S.room):Math.ceil(S.hall)+1),600+2200*(back?s-S.room:S.hall-s)/(S.hall-S.room))}
+  var inHall=s>=S.hall-1;
+  if(inHall!==st.inHall){st.inHall=inHall;elAf.classList.toggle('in',inHall);elMore.classList.toggle('in',inHall);root.classList.toggle('hall',inHall);
+    if(inHall){st.farOn=false;elFar.className='';if(!st.hallSeen){st.hallSeen=true;st.hallT=t;st.shown=false;elAf.classList.remove('picked')}}else st.fromHall=true;
+    moving=true}
+  if(inHall){var hs=(t-st.hallT)/1000;
+    if(!st.shown&&(hs>1.5||reduce))pick(st.first,t,false);
+    if(st.shown&&!st.touched&&!reduce&&t-st.lastSw>7000&&elForm.hidden&&elDone.hidden)pick(nextOn(1),t,false);
+    /* свет выбранного фонаря переезжает плавно */
+    var qx=B.PX[st.sel],qy=B.PY[st.sel];
+    if(st.px!==null&&(qx!==st.px||qy!==st.py)){if(Math.abs(qx-st.px)+Math.abs(qy-st.py)>0.5){var kk=1-Math.exp(-dt/170);st.px+=(qx-st.px)*kk;st.py+=(qy-st.py)*kk}else{st.px=qx;st.py=qy}applyPool();moving=true}
+  }
+  /* дверца: приоткрыта на 30 градусов, пока стоим у шкафа, дальше распахивается прокруткой. К нужному углу идёт плавно */
+  var pre=cl((s-S.room)/(S.door-S.room)),u=cl((s-S.door)/(S.hall-S.door));
+  var tt=u>0?30+56*sm(u/0.3):((pre>0.45||st.ajarOn)&&s>S.room-VH*0.1?30:0);
+  if(st.theta!==tt){if(reduce||Math.abs(tt-st.theta)<0.2)st.theta=tt;else st.theta+=(tt-st.theta)*(1-Math.exp(-dt/110));moving=true}
+  moths(dt,s,inHall,u);
+  if(!moving&&!st.dirty)return;
+  st.dirty=false;
+  var e=sm(s/S.night),e1=e<0.5?e*2:1,e2=e<0.5?0:e*2-1;
+  /* небо: бумага, сумерки, ночь */
+  set(elCd,'opacity',e1.toFixed(3));set(elCn,'opacity',e2.toFixed(3));
+  var night=e>0.45,deep=s>S.hall+VH*0.12;
+  if(night!==st.night||deep!==st.deep){st.night=night;st.deep=deep;doc.body.className=(night?'night':'')+(deep?' deep':'')}
+  set(elH1,'opacity',cl(1-e*3.2).toFixed(2));
+  /* проход через шкаф: камера шагает в проём, шкаф растворяется, фонарь остаётся снаружи */
+  var ze=reduce?0:sm((u-0.32)/0.5),z=1+0.75*ze,dark=sm((u-0.36)/0.42);
+  /* фонарь */
+  var L=st.lit,out=sm((u-0.26)/0.3),hero=lerp(G.hero,1,e),gy=G.gy*hero;
+  set(elLamp,'transform','translateY('+(-out*(G.lh+G.lt+60)).toFixed(1)+'px) rotate('+st.sway.toFixed(2)+'deg) scale('+hero.toFixed(3)+')');
+  set(lBm,'opacity',(L*(1-e)*0.92).toFixed(2));set(lBn,'opacity',(L*e*0.92).toFixed(2));set(lG1,'opacity',(L*sm(e*1.5)).toFixed(2));
+  set(elLamp,'color',e>0.5?'#07070d':'#141416');
+  set(elPool,'transform','translateY('+gy.toFixed(1)+'px)');
+  set(elPool,'opacity',inHall?'0':(L*lerp(0.5,1,e)*(1-dark)).toFixed(2));
+  /* стена проступает, когда стемнело, едет вместе со страницей и останавливается вместе со шкафом */
+  if(!inHall){var wo=sm((e-0.5)/0.5)*(1-dark);set(elShade,'opacity',wo.toFixed(3));set(elWall,'opacity',Math.max(wo,G.tw&&dark<1?0.012:0).toFixed(3));set(elWall,'transform','translate3d(0,'+(G.wy0-Math.min(s,S.room)).toFixed(1)+'px,0)')}
+  if(!inHall&&s>S.room-VH*1.1&&W.body){
+    var stTop=Math.max(0,S.room-s),arr=sm(1-stTop/VH);
+    if(Math.abs(st.theta-W.th)>0.12)drawDoor(st.theta);
+    set(elScene,'opacity',((0.12+0.88*arr*arr)*(1-sm((u-0.4)/0.32))).toFixed(3));
+    set(elScene,'transform',ze>0?'scale('+z.toFixed(3)+')':'none');
+    var zc=ze>0.02;if(zc!==st.zc){st.zc=zc;elWcv.style.imageRendering=zc?'auto':'pixelated'}
+    /* огни зала в проёме: в щели видны первые два, дверца открывает остальные, потом они растут в фонари афиши и встают на места */
+    var R=W.r,dX=G.sLeft+R[0],dY=stTop+G.sTop+R[1],dW=R[4],dH=R[5],gapW=Math.max(0,W.xf-R[0]),open=sm((st.theta-30)/56);
+    var show=st.theta>1.5,ef=reduce?sm(u):sm((u-0.3)/0.66),k0=Math.min(1/7,0.7*dW/(2*B.span+B.w)),kf=Math.exp(Math.log(k0)*(1-ef)),f1=st.first,f2=Math.min(N-1,f1+1);
+    var ox=((B.PX[f1]+B.PX[f2])/2-B.cx)*k0,cx=lerp(lerp(dX+gapW/2-ox,dX+dW/2,open),B.cx,ef),cy=lerp(dY+dH*0.45,B.cy,ef);
+    st.gx=cx;st.gy=cy;st.gf=ef;
+    if(show!==st.farOn){st.farOn=show;elFar.className=show?(st.fromHall?'show':'show fade'):'';st.fromHall=false}
+    set(elFar,'clipPath',ef>0?'none':'inset('+dY.toFixed(0)+'px '+(VW-dX-gapW).toFixed(0)+'px '+(VH-dY-dH).toFixed(0)+'px '+dX.toFixed(0)+'px)');
+    for(j=0;j<N;j++){var tr='translate('+(cx+(B.PX[j]-B.cx)*kf-B.w/2).toFixed(1)+'px,'+(cy+(B.PY[j]-B.cy)*kf-B.h*0.62).toFixed(1)+'px) scale('+kf.toFixed(3)+')';
+      fars[j].style.transform=tr;if(farB[j])farB[j].style.transform=tr}
+  }else if(st.farOn){st.farOn=false;elFar.className=''}
+  var pinned=s>S.room-VH*0.15&&s<S.hall-1;if(pinned!==st.pinned){st.pinned=pinned;elDoor.hidden=!pinned}
+}
+function boot(){lastW=root.clientWidth;lastH=window.innerHeight;build();showEvent();if(location.hash==='#afisha')jump();requestAnimationFrame(frame)}
+if(doc.fonts&&doc.fonts.load)doc.fonts.load('60px Forum','ПОДВАЛ').then(function(){if(VW)build()},function(){});
+boot();
+})();
+</script>
+</body>
+</html>
