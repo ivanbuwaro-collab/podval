@@ -42,18 +42,22 @@ body{background:var(--night);color:var(--ink);font-family:var(--text);font-size:
 /* стена спуска: кладка Подвала и название на ней. Тень с просветом под фонарём оставляет видимым только то, куда достаёт свет.
    За кругом света тень глухая, иначе в темноте проступают прямые края самой стены (она уже экрана) */
 #world{position:fixed;inset:0;z-index:0;pointer-events:none}
-#wall{position:absolute;left:50%;top:0;opacity:0;will-change:transform,opacity;background-repeat:repeat;image-rendering:pixelated}
+#wall{position:absolute;left:50%;top:0;height:100%;opacity:0;will-change:transform,opacity;background-repeat:repeat;image-rendering:pixelated}
 #shade{position:absolute;inset:0;opacity:0;will-change:opacity;background:radial-gradient(circle var(--sr,60vh) at 50% var(--gy,180px),rgba(12,11,20,0) 0,rgba(12,11,20,.1) 32%,rgba(12,11,20,.5) 60%,rgba(12,11,20,.84) 80%,rgba(12,11,20,.96) 92%,#0c0b14 100%)}
-html.hall #world{display:none}
-#name{position:absolute;left:0;right:0;text-align:center;font-family:var(--display);text-transform:uppercase;white-space:nowrap;color:#f4f3ff;text-shadow:0 0 30px rgba(110,120,255,.6),0 0 4px rgba(12,11,20,.95),0 0 14px rgba(12,11,20,.7)}
+html.hall #world,html.hall #intro,html.hall #lamp,html.hall #pool{display:none}
+#name{position:absolute;opacity:0;will-change:opacity;pointer-events:none;text-align:center;font-family:var(--display);text-transform:uppercase;white-space:nowrap;color:#f4f3ff;text-shadow:0 0 30px rgba(110,120,255,.6),0 0 4px rgba(12,11,20,.95),0 0 14px rgba(12,11,20,.7)}
 #name span{display:block;line-height:.9}
-/* два предложения о Подвале написаны на той же стене под названием. Под ними стена притемнена, чтобы буквы не рябили на кладке */
-#about{position:absolute;left:50%;width:min(24em,calc(100vw - 48px));transform:translateX(-50%);text-align:center;font-family:var(--display);line-height:1.28;color:#fff;text-shadow:0 0 5px rgba(12,11,20,.95),0 0 16px rgba(12,11,20,.8);text-wrap:balance}
+/* два предложения о Подвале написаны на той же стене рядом с названием. Под ними стена притемнена, чтобы буквы не рябили на кладке */
+#about{position:absolute;opacity:0;will-change:opacity;pointer-events:none;transform:translateX(-50%);text-align:center;font-family:var(--display);line-height:1.28;color:#fff;text-shadow:0 0 5px rgba(12,11,20,.95),0 0 16px rgba(12,11,20,.8);text-wrap:balance}
 #about::before{content:"";position:absolute;inset:-38px -34px;z-index:-1;background:radial-gradient(closest-side,rgba(12,11,20,.78),rgba(12,11,20,.56) 62%,rgba(12,11,20,0))}
 #about p{margin:0}
 #about p+p{margin-top:.7em}
 
 main{position:relative;z-index:1}
+/* до зала страница не прокручивается: улица и шкаф стоят на месте, сцены меняются по нажатию */
+html.intro main{position:fixed;inset:0;overflow:hidden}
+#intro{position:absolute;inset:0}
+html:not(.js) #intro{display:none}
 .top{position:fixed;left:0;right:0;top:0;z-index:5;display:flex;justify-content:space-between;align-items:center;padding-top:calc(12px + env(safe-area-inset-top,0px));padding-bottom:8px;font-family:var(--display);font-size:16px;letter-spacing:.1em;text-transform:uppercase;color:var(--ink);transition:color .4s,opacity .3s}
 .top a{color:inherit;text-decoration:none;padding:6px 2px}
 .top a:focus-visible{outline:2px solid currentColor;outline-offset:2px}
@@ -78,8 +82,10 @@ html:not(.lm) .lt i{visibility:hidden}
 html.lm:not(.lit) #lamp .sp{animation:spark 1.9s steps(1) infinite}
 @keyframes spark{0%{opacity:.9}7%{opacity:0}13%{opacity:.8}17%{opacity:0}100%{opacity:0}}
 
-#street{position:relative;box-sizing:border-box;min-height:100vh;padding-top:38vh;padding-bottom:8vh;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center}
+#street{position:absolute;inset:0;box-sizing:border-box;padding-top:38vh;padding-bottom:8vh;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center}
 #street h1{font-family:var(--display);font-weight:400;font-size:clamp(30px,min(9.6vw,11vh),84px);line-height:1.03;letter-spacing:.03em;text-transform:uppercase;margin:0;max-width:11em;text-wrap:balance;will-change:opacity}
+#hint{margin:26px 0 0;font-size:15px;letter-spacing:.03em;color:#66656f;opacity:0;transition:opacity 1.6s}
+#hint.on{opacity:1}
 #ignite{position:absolute;left:50%;top:0;appearance:none;background:none;border:0;padding:0;cursor:pointer;border-radius:8px;-webkit-tap-highlight-color:transparent}
 #ignite:focus-visible,#door:focus-visible{outline:2px solid var(--blue);outline-offset:4px}
 /* мотыльки: сидят на стене светлыми точками, а когда фонарь подходит близко, слетаются к нему */
@@ -96,16 +102,13 @@ body.night .moth{color:#f1f2ff}
 @keyframes mflap{from{transform:scaleX(1)}to{transform:scaleX(.16)}}
 html:not(.js) .moth{display:none}
 
-#descent{position:relative;min-height:220vh}
-
 /* шкаф: гравюра с настоящего шкафа Подвала. Дверца висит на петлях справа и открывается на зрителя, за ней темно и горят огни зала */
-#room{position:absolute;left:0;right:0;pointer-events:none}
-#stage{position:sticky;top:0;height:100vh;overflow:hidden}
+#room{position:absolute;inset:0;pointer-events:none}
+#stage{position:absolute;inset:0;overflow:hidden}
 #scene{position:absolute;left:50%;transform-origin:50.45% 48.6%;will-change:transform,opacity}
 #scene::before{content:"";position:absolute;left:7%;right:7%;top:5%;bottom:0;background:#0a0a16;box-shadow:0 0 26px 20px rgba(10,10,22,.88)}
 #wcv{position:relative;display:block;width:100%;height:100%;image-rendering:pixelated}
 #door{position:absolute;appearance:none;background:none;border:0;padding:0;margin:0;cursor:pointer;border-radius:4px;pointer-events:auto;-webkit-tap-highlight-color:transparent}
-html.hall #room{display:none}
 /* огни зала, как они видны из шкафа */
 #far{position:fixed;inset:0;z-index:3;pointer-events:none;opacity:0}
 #far.show{opacity:1}
@@ -120,8 +123,6 @@ html:not(.js) #afisha,html:not(.js) #more{background:var(--night)}
 html.js #afisha:not(.picked) #slide{visibility:hidden}
 /* свод и стена зала нарисованы один раз, уже освещёнными: свет идёт от горящих фонарей афиши */
 #vcv{position:absolute;left:0;top:0;width:100%;height:var(--vh,30vh);display:block;pointer-events:none;image-rendering:pixelated;transition:opacity 1.1s .1s}
-/* стена: синяя, с кружевным узором, как в Подвале */
-#lcv{position:absolute;left:50%;display:block;pointer-events:none;transition:opacity 1.1s .1s}
 #wglow{position:absolute;left:0;right:0;top:0;pointer-events:none;transition:opacity 1.1s .1s}
 .selpool{position:absolute;left:0;top:0;width:620px;height:620px;margin:-310px 0 0 -310px;border-radius:50%;background:radial-gradient(closest-side,rgba(34,40,255,.34),rgba(34,40,255,.12) 55%,rgba(34,40,255,0));pointer-events:none;opacity:0;transition:opacity .8s}
 #afisha.lit .selpool{opacity:1}
@@ -151,11 +152,11 @@ html.js #afisha:not(.picked) #slide{visibility:hidden}
 @media (hover:hover){.lamp.on:not([aria-selected="true"]):hover .bl{transform:scale(1.22)}.lamp:hover{color:#fff}.lamp.off:hover .lt{--ironc:rgba(160,158,196,.66)}}
 @keyframes flick{0%{opacity:.8}18%{opacity:.92}31%{opacity:.72}47%{opacity:.9}63%{opacity:.78}82%{opacity:.93}100%{opacity:.8}}
 /* при входе зал проступает вокруг уже горящих огней, по ним пробегает волна */
-html.js #afisha:not(.in) #vcv,html.js #afisha:not(.in) #lcv,html.js #afisha:not(.in) #wglow,html.js #afisha:not(.in) .lamp .day,html.js #afisha:not(.in) .lamp .kind,html.js #afisha:not(.in) .lamp.r0::before{opacity:0;transition:none}
+html.js #afisha:not(.in) #vcv,html.js #afisha:not(.in) #wglow,html.js #afisha:not(.in) .lamp .day,html.js #afisha:not(.in) .lamp .kind,html.js #afisha:not(.in) .lamp.r0::before{opacity:0;transition:none}
 #afisha.in .lamp.on .gs{animation:wave .7s ease-out calc(var(--i)*80ms + 350ms) 1 backwards}
 @keyframes wave{0%{filter:brightness(1)}45%{filter:brightness(1.9) drop-shadow(0 0 14px rgba(201,200,255,.9))}100%{filter:brightness(1)}}
 
-/* экран вечера: стоит на кружевной стене, она видна вокруг него. Сама плашка почти глухая, чтобы текст не рябил на узоре */
+/* экран вечера: тёмная плашка в тонкой рамке */
 #slide{position:relative;box-sizing:border-box;width:100%;max-width:clamp(620px,46vw,780px);margin-top:var(--gap,40px);padding:30px 40px 30px;min-height:240px;display:flex;flex-direction:column;justify-content:center;text-align:center;color:var(--milk);border:1px solid rgba(236,238,251,.38);background:rgba(11,10,22,.93);touch-action:pan-y}
 #slide .when{font-size:15px;letter-spacing:.02em;margin:0;color:var(--milk-2)}
 #slide h2{font-family:var(--display);font-weight:400;font-size:clamp(28px,4.2vw,44px);line-height:1.08;margin:10px 0 0;color:#fff;text-wrap:balance}
@@ -197,25 +198,29 @@ html.js #afisha:not(.in) #vcv,html.js #afisha:not(.in) #lcv,html.js #afisha:not(
 <body>
 <div id="bg"><i class="cd" id="cd"></i><i class="cn" id="cn"></i></div>
 <div id="pool"></div>
-<div id="world" aria-hidden="true"><div id="wall"><div id="name"><span>Подвал</span><span>Витриоля</span></div><div id="about"><p>Кабаре на&nbsp;Почтамтской улице в&nbsp;пяти минутах от&nbsp;Исаакиевского собора.</p><p>Место, в&nbsp;котором собирается интеллектуальный андеграунд Санкт-Петербурга.</p></div></div><i id="shade"></i></div>
+<div id="world" aria-hidden="true"><div id="wall"></div><i id="shade"></i></div>
 <div id="lamp" aria-hidden="true"><i class="cord"></i><div class="lt"><i class="gs"></i><i class="bl bm" id="bm"></i><i class="bl bn" id="bn"></i><i class="gs g1" id="g1"></i><i class="sp"></i><i class="ir"></i></div></div>
 <header class="top gut"><a href="https://vitriolmag.ru">Витриоль</a><a href="#afisha" id="jump">Афиша</a></header>
 <main>
+<div id="intro">
 <section id="street" class="gut">
   <button type="button" id="ignite" aria-label="Зажечь фонарь"></button>
   <h1>Следуйте за синими огнями</h1>
+  <p id="hint" aria-hidden="true">Нажмите на фонарь</p>
 </section>
-<section id="descent">
+<section id="room">
   <h2 class="vh">Подвал Витриоля</h2>
   <p class="vh">Кабаре на Почтамтской улице в пяти минутах от Исаакиевского собора. Место, в котором собирается интеллектуальный андеграунд Санкт-Петербурга.</p>
-  <div id="room"><div id="stage">
+  <div id="stage">
     <div id="scene"><canvas id="wcv"></canvas></div>
     <button type="button" id="door" aria-label="Открыть шкаф и войти в зал" hidden></button>
-  </div></div>
+  </div>
 </section>
+<div id="name" aria-hidden="true"><span>Подвал</span><span>Витриоля</span></div>
+<div id="about" aria-hidden="true"><p>Кабаре на&nbsp;Почтамтской улице в&nbsp;пяти минутах от&nbsp;Исаакиевского собора.</p><p>Место, в&nbsp;котором собирается интеллектуальный андеграунд Санкт-Петербурга.</p></div>
+</div>
 <section id="afisha" class="gut" aria-label="Афиша">
   <i id="wglow"></i>
-  <canvas id="lcv"></canvas>
   <canvas id="vcv"></canvas>
   <i class="selpool" id="selpool"></i>
   <div class="lamps" id="lamps" role="tablist" aria-label="Вечера Подвала на месяц вперёд"></div>
@@ -258,7 +263,7 @@ html.js #afisha:not(.in) #vcv,html.js #afisha:not(.in) #lcv,html.js #afisha:not(
 <script>
 (function(){
 'use strict';
-var doc=document,root=doc.documentElement;root.className+=' js';
+var doc=document,root=doc.documentElement;root.className+=' js intro';
 function $(i){return doc.getElementById(i)}
 var reduce=window.matchMedia&&window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 
@@ -286,9 +291,11 @@ function cl(v){return v<0?0:v>1?1:v}
 function sm(v){v=cl(v);return v*v*(3-2*v)}
 function lerp(a,b,t){return a+(b-a)*t}
 
-var VW=0,VH=0,S={},G={},B={},W={th:-1};
-var st={lit:0,litOn:false,sway:0,swayV:0,lastS:-1,sel:0,first:0,shown:false,hallSeen:false,inHall:false,touched:false,lastSw:0,mx:-1,ajarOn:false,nearT:0,dir:1,scT:0,touch:false,dirty:true,anim:null,hallT:0,farOn:false,fromHall:false,px:null,py:null,theta:0,lastT:0};
-var elBg=$('bg'),elCd=$('cd'),elCn=$('cn'),elShade=$('shade'),elPool=$('pool'),elWorld=$('world'),elWall=$('wall'),elName=$('name'),elAbout=$('about'),elLamp=$('lamp'),elStreet=$('street'),elDesc=$('descent'),elAf=$('afisha'),elMore=$('more'),elIgn=$('ignite'),elDoor=$('door'),elH1=elStreet.querySelector('h1'),elRoom=$('room'),elStage=$('stage'),elScene=$('scene'),elWcv=$('wcv'),elFar=$('far'),elFarB=$('farb'),elFarF=$('farf'),elLamps=$('lamps'),elSlide=$('slide'),elAct=$('s-act'),elFacts=$('facts'),elBook=$('book'),elForm=$('signup'),elDone=$('done'),elPoolSel=$('selpool'),vCv=$('vcv'),lCv=$('lcv'),elGlow=$('wglow');
+var VW=0,VH=0,G={},B={},W={th:-1};
+/* сцены: 0 улица, 1 темнеет и проступает шкаф, 2 проходим в шкаф, 3 зал. Длительности в миллисекундах */
+var DARK_MS=6500,ENTER_MS=2800,AJAR_MS=1200,GAP_MS=2600,HINT_MS=7000;
+var st={phase:0,t0:0,t1:0,t2:0,q:0,lit:0,litOn:false,sway:0,swayV:0,lastS:-1,sel:0,first:0,shown:false,touched:false,lastSw:0,mx:-1,ajarT:0,dirty:true,hallT:0,farOn:false,px:null,py:null,theta:0,lastT:0,lampUp:0,can:false,hintOn:false};
+var elBg=$('bg'),elCd=$('cd'),elCn=$('cn'),elShade=$('shade'),elPool=$('pool'),elWorld=$('world'),elWall=$('wall'),elName=$('name'),elAbout=$('about'),elLamp=$('lamp'),elStreet=$('street'),elHint=$('hint'),elAf=$('afisha'),elMore=$('more'),elIgn=$('ignite'),elDoor=$('door'),elH1=elStreet.querySelector('h1'),elRoom=$('room'),elStage=$('stage'),elScene=$('scene'),elWcv=$('wcv'),elFar=$('far'),elFarB=$('farb'),elFarF=$('farf'),elLamps=$('lamps'),elSlide=$('slide'),elAct=$('s-act'),elFacts=$('facts'),elBook=$('book'),elForm=$('signup'),elDone=$('done'),elPoolSel=$('selpool'),vCv=$('vcv'),elGlow=$('wglow');
 var lBm=$('bm'),lBn=$('bn'),lG1=$('g1');
 
 /* ── гравюра в три краски. Тон 0..1 превращается в точки: до порога синие на тёмном, выше порога молочные на синем.
@@ -311,7 +318,7 @@ load('lantern.png',function(im){
 var LT_ON='<i class="bl"></i><i class="gs"></i><i class="ir"></i>',LT_OFF='<i class="gs"></i><i class="ir"></i>';
 
 /* ── стена спуска: кусок настоящей кладки, отражённый зеркально в обе стороны, чтобы повторялся без швов ── */
-var imBrick=null,imWard=null,imVault=null,imLace=null;
+var imBrick=null,imWard=null,imVault=null;
 load('brick.webp',function(im){imBrick=im;setTimeout(wallTile,40)});
 function wallTile(){
   if(!imBrick||!VH)return;
@@ -329,9 +336,9 @@ function wallTile(){
 var DOORR=[0.155,0.1195,0.8541,0.8526],SCENE_A=660/1163;
 load('ward.webp',function(im){imWard=im;rasterWard();st.dirty=true});
 function rasterWard(){
-  if(!imWard||!G.sw)return;var w=G.sw,h=G.sh;if(W.w===w&&W.h===h&&W.gy===G.gy)return;W.w=w;W.h=h;W.gy=G.gy;
+  if(!imWard||!G.sw)return;var w=G.sw,h=G.sh,key=w+'x'+h+':'+Math.round(G.gyD-G.sTop)+':'+Math.round(G.wR);if(W.key===key)return;W.key=key;W.w=w;W.h=h;
   elWcv.width=w;elWcv.height=h;var c=elWcv.getContext('2d',{willReadFrequently:true});c.imageSmoothingQuality='high';c.clearRect(0,0,w,h);c.drawImage(imWard,0,0,w,h);
-  var d=c.getImageData(0,0,w,h).data,n=w*h,i,x,y,P=new Float32Array(256),L=new Float32Array(n),lx=w/2,ly=G.gy-G.sTop,R=0.8*VH;
+  var d=c.getImageData(0,0,w,h).data,n=w*h,i,x,y,P=new Float32Array(256),L=new Float32Array(n),lx=w/2,ly=G.gyD-G.sTop,R=G.wR;
   for(i=0;i<256;i++)P[i]=Math.pow(i/255,0.72)*1.15;
   for(y=0;y<h;y++)for(x=0;x<w;x++)L[y*w+x]=0.2+0.8*(1-sm((Math.sqrt((x-lx)*(x-lx)+(y-ly)*(y-ly))/R-0.14)/0.86));
   var xl=Math.round(DOORR[0]*w),yt=Math.round(DOORR[1]*h),xh=Math.round(DOORR[2]*w),yb=Math.round(DOORR[3]*h),lw=xh-xl,lh=yb-yt;
@@ -384,19 +391,20 @@ var MO=[];
 (function(){var box=$('moths');for(var i=0;i<5;i++){var e=doc.createElement('div');e.className='moth';e.innerHTML='<i class="wl"></i><i class="wr"></i><u></u>';
   e.children[0].style.animationDelay=e.children[1].style.animationDelay=(-i*0.37)+'s';box.appendChild(e);
   MO.push({el:e,x:0,y:0,vx:0,vy:0,free:false,hx:0,hy:0,a:i*1.9,w:(i%2?-1:1)*(1.5+0.3*i),r:0.78+0.11*i,ang:0,sc:1,z:3,on:false})}})();
-function moths(dt,s,inHall,u){
-  var hero=lerp(G.hero,1,sm(s/S.night)),lx=VW/2+Math.sin(st.sway*0.01745)*(G.lt+G.lh*0.62)*hero,ly=G.gy*hero,ctx=inHall?2:u>0.1?1:0,h=dt/1000,i,k,lit=[],selOn=EV[st.sel].on&&st.shown;
+function moths(dt,ctx,hs,sy){
+  var lx=VW/2+Math.sin(st.sway*0.01745)*(G.lt+G.lh*0.62)*hs,ly=G.gy*hs-st.lampUp,h=dt/1000,i,k,lit=[],selOn=EV[st.sel].on&&st.shown;
   if(ctx===2)for(k=0;k<N;k++)if(EV[k].on&&!(selOn&&k===st.sel))lit.push(k);
-  for(i=0;i<MO.length;i++){var m=MO[i],hy=i?m.hy-s:m.hy;
-    if(st.litOn!==m.on){m.on=st.litOn;m.el.classList.toggle('on',m.on)}
-    if(!m.free){var qx=m.hx-lx,qy=hy-ly;
-      /* просыпается, когда свет фонаря дошёл до него. Тот, мимо кого уже прошли, догоняет сверху */
-      if(!reduce&&st.lit>0.5&&(ctx>0||!i||hy<ly||qx*qx+qy*qy<G.wake*G.wake)){m.free=true;m.el.classList.add('fly');m.x=m.hx;m.y=Math.max(-40,Math.min(VH+40,hy));m.vx=m.vy=0}
-      else{m.el.style.transform='translate('+m.hx.toFixed(1)+'px,'+hy.toFixed(1)+'px) scale(.85)';continue}}
+  for(i=0;i<MO.length;i++){var m=MO[i];
+    /* сидящих на стене видно, только когда стемнело */
+    var vis=st.litOn&&(!i||m.free||ctx>0||st.q>0.3);if(vis!==m.on){m.on=vis;m.el.classList.toggle('on',vis)}
+    if(!m.free){
+      /* первый прилетает, как только зажгли фонарь, остальные просыпаются по одному, пока проступает стена */
+      if(!reduce&&st.litOn&&(ctx>0||st.q>=m.wq)){m.free=true;m.el.classList.add('fly');m.x=m.hx;m.y=m.hy;m.vx=m.vy=0}
+      else{m.el.style.transform='translate('+m.hx.toFixed(1)+'px,'+m.hy.toFixed(1)+'px) scale(.85)';continue}}
     m.a+=m.w*h;var cx,cy,R,z=4,sc=1;
-    if(ctx===0){cx=lx;cy=ly;R=G.lw*hero*0.8*m.r;z=Math.sin(m.a)>0?3:1;sc=1+0.13*Math.sin(m.a)}
+    if(ctx===0){cx=lx;cy=ly;R=G.lw*hs*0.8*m.r;z=Math.sin(m.a)>0?3:1;sc=1+0.13*Math.sin(m.a)}
     else if(ctx===1){cx=st.gx;cy=st.gy;R=(8+64*st.gf)*m.r;sc=lerp(0.5,B.msc,st.gf)}
-    else{var j=!lit.length||(selOn&&i<2)?st.sel:lit[(i-(selOn?2:0))%lit.length];cx=B.PX[j];cy=B.PY[j]-(s-S.hall);R=B.w*0.62*m.r;sc=B.msc}
+    else{var j=!lit.length||(selOn&&i<2)?st.sel:lit[(i-(selOn?2:0))%lit.length];cx=B.PX[j];cy=G.afTop+B.PY[j]-sy;R=B.w*0.62*m.r;sc=B.msc}
     var tx=cx+R*Math.cos(m.a),ty=cy+R*0.42*Math.sin(m.a)+R*0.3*Math.sin(m.a*1.7+i);
     m.vx+=(26*(tx-m.x)-6*m.vx)*h;m.vy+=(26*(ty-m.y)-6*m.vy)*h;
     var sp=Math.sqrt(m.vx*m.vx+m.vy*m.vy);if(sp>1100){m.vx*=1100/sp;m.vy*=1100/sp}
@@ -407,40 +415,50 @@ function moths(dt,s,inHall,u){
   }
 }
 
-/* Вехи пути в пикселях прокрутки: night — стемнело, room — шкаф встал на место,
-   door — дверца пошла, hall — зал. Между door и hall страница сама доводит до конца. */
+/* Раскладка. На улице фонарь крупный и висит над заголовком. В темноте он становится своего размера, под ним стоит шкаф.
+   На широком экране название и описание написаны на стене по обе стороны шкафа, на узком стоят над ним одно под другим */
 function build(){
   VW=root.clientWidth;VH=window.innerHeight;
-  S.night=0.8*VH;S.room=2.3*VH;S.door=S.room+0.12*VH;S.hall=S.room+0.9*VH;
-  elStreet.style.minHeight=VH+'px';elStreet.style.height=VH+'px';elDesc.style.minHeight=(S.hall-VH)+'px';elDesc.style.height=(S.hall-VH)+'px';
-  /* прокрутку считаем от верха первой секции: над ней у страницы бывает отступ под вырез экрана */
-  G.base=Math.max(0,Math.round(elStreet.getBoundingClientRect().top+(window.pageYOffset||0)));
-  /* фонарь: на улице он крупнее, к подвалу становится своего размера */
+  G.afTop=parseFloat(getComputedStyle(root).paddingTop)||0;
   G.lw=Math.min(150,0.166*VH,0.36*VW);G.lt=36;G.lh=G.lw*1.6895;G.gy=G.lt+G.lh*0.62;G.hero=1.25;
   root.style.setProperty('--lw',G.lw.toFixed(1)+'px');
   elIgn.style.width=(G.lw*G.hero)+'px';elIgn.style.height=((G.lt+G.lh)*G.hero)+'px';elIgn.style.marginLeft=(-G.lw*G.hero/2)+'px';
-  /* мотыльки: один прилетает из-за края, когда зажгут фонарь, один сидит внизу улицы, три на спуске по обе стороны пути.
-     Места заданы от верха страницы */
-  var mdx=Math.min(64,VW*0.12);G.ms=Math.max(15,Math.min(24,VH*0.022));G.wake=0.36*VH;root.style.setProperty('--ms',G.ms.toFixed(1)+'px');
-  MO[0].hx=VW+60;MO[0].hy=-60;MO[1].hx=VW/2;MO[1].hy=VH*0.94;MO[2].hx=VW/2-mdx;MO[2].hy=VH*1.22;MO[3].hx=VW/2+mdx;MO[3].hy=VH*2.0;MO[4].hx=VW/2-mdx*0.5;MO[4].hy=VH*2.26;
+  G.ms=Math.max(15,Math.min(24,VH*0.022));root.style.setProperty('--ms',G.ms.toFixed(1)+'px');
   if(st.gx===undefined){st.gx=VW/2;st.gy=VH/2;st.gf=0}
-  /* стена и свет на ней */
-  G.sr=Math.round(Math.max(0.66*VH,300));G.wy0=Math.round(0.4*VH);G.ww=Math.min(VW,2*G.sr+40);G.pitch=Math.max(34,Math.min(60,VH*0.05));
-  root.style.setProperty('--sr',G.sr+'px');root.style.setProperty('--gy',G.gy.toFixed(1)+'px');
-  elWall.style.width=G.ww+'px';elWall.style.marginLeft=(-G.ww/2)+'px';elWall.style.height=Math.ceil(S.room+VH-G.wy0)+'px';
-  /* название: две строки одной ширины, как набор афиши */
-  var bw=Math.min(VW*(VW<600?0.86:0.6),VH*1.25),c=doc.createElement('canvas').getContext('2d');c.font='100px Forum, Georgia, serif';
-  var m1=c.measureText('ПОДВАЛ').width/100,m2=c.measureText('ВИТРИОЛЯ').width/100,f1=bw/m1,f2=bw/m2,hh=(f1+f2)*0.9;if(hh>VH*0.5){var k=VH*0.5/hh;f1*=k;f2*=k;hh=VH*0.5}
-  elName.children[0].style.fontSize=f1+'px';elName.children[1].style.fontSize=f2+'px';elName.style.top=(VH*1.62-hh/2-G.wy0)+'px';
-  /* шкаф: стоит у низа экрана, карниз сразу под фонарём */
-  elRoom.style.top=(S.room-VH)+'px';elRoom.style.height=(S.hall-S.room+VH)+'px';elStage.style.height=VH+'px';
-  G.sh=Math.round(Math.max(170,Math.min(VH-G.lt-G.lh+2,(VW-12)/SCENE_A)));G.sw=Math.round(G.sh*SCENE_A);G.sTop=VH-G.sh-6;G.sLeft=Math.round(VW/2-G.sw/2);
+  var c=doc.createElement('canvas').getContext('2d');c.font='100px Forum, Georgia, serif';
+  var m1=c.measureText('ПОДВАЛ').width/100,m2=c.measureText('ВИТРИОЛЯ').width/100;
+  function nameAt(bw,x,y){var f1=bw/m1,f2=bw/m2,hh=(f1+f2)*0.9;elName.children[0].style.fontSize=f1+'px';elName.children[1].style.fontSize=f2+'px';
+    elName.style.width=bw+'px';elName.style.left=(x-bw/2)+'px';if(y!==undefined)elName.style.top=(y-hh/2)+'px';return hh}
+  var Hl=G.lt+G.lh,maxSh=(VW-12)/SCENE_A,shS=Math.round(Math.max(170,Math.min(VH-Hl+2,maxSh))),side=(VW-shS*SCENE_A)/2,sh,ds=1;
+  G.side=side>=300&&VW>=820;
+  if(G.side){
+    sh=shS;var sTop=VH-sh-6,cy=sTop+sh*0.4,cxL=side/2,bw=Math.min(side*0.78,VH*0.62);
+    nameAt(bw,cxL,cy);
+    elAbout.style.fontSize=Math.max(16,Math.min(VH*0.03,side*0.05)).toFixed(1)+'px';elAbout.style.width=Math.min(bw*1.04,side-40)+'px';elAbout.style.left=(VW-cxL)+'px';
+    elAbout.style.top=(cy-elAbout.offsetHeight/2)+'px';
+  }else{
+    var bw2=Math.min(VW*0.62,VH*0.36,480),gA=VH*0.024,gB=VH*0.018,gC=VH*0.03;
+    elAbout.style.fontSize=Math.max(15,Math.min(21,VW*0.042,VH*0.024)).toFixed(1)+'px';elAbout.style.width=Math.min(VW-40,440)+'px';elAbout.style.left=(VW/2)+'px';
+    var hh=nameAt(bw2,VW/2),ah=elAbout.offsetHeight,rest=VH-6-gA-hh-gB-ah-gC;
+    sh=Math.min(maxSh,rest-Hl);
+    /* шкафу нужно хотя бы две пятых экрана: если тесно, фонарь в темноте висит чуть меньше */
+    if(sh<0.42*VH){ds=Math.max(0.6,(rest-0.42*VH)/Hl);sh=Math.min(maxSh,rest-Hl*ds)}
+    sh=Math.round(Math.max(150,sh));var at=VH-sh-6-gC-ah;elAbout.style.top=at+'px';elName.style.top=(at-gB-hh)+'px';
+  }
+  G.ds=ds;G.sh=sh;G.sw=Math.round(G.sh*SCENE_A);G.sTop=VH-G.sh-6;G.sLeft=Math.round(VW/2-G.sw/2);G.gyD=G.gy*ds;
+  G.wR=Math.max(0.8*VH,1.07*(G.sTop+G.sh-G.gyD));
   elScene.style.width=G.sw+'px';elScene.style.height=G.sh+'px';elScene.style.marginLeft=(-G.sw/2)+'px';elScene.style.top=G.sTop+'px';
-  elDoor.style.left=(G.sLeft+G.sw*DOORR[0])+'px';elDoor.style.top=(G.sTop+G.sh*DOORR[1])+'px';elDoor.style.width=(G.sw*(DOORR[2]-DOORR[0]))+'px';elDoor.style.height=(G.sh*(DOORR[3]-DOORR[1]))+'px';
-  /* описание под названием. Два нижних мотылька сидят под ним, но выше шкафа */
-  elAbout.style.fontSize=Math.max(16,Math.min(30,VH*0.031,VW*0.058)).toFixed(1)+'px';
-  var at=VH*1.62+hh/2+VH*0.07,ab=at+elAbout.offsetHeight,mmax=S.room+G.sTop-VH*0.06;elAbout.style.top=(at-G.wy0)+'px';
-  MO[3].hy=Math.min(ab+VH*0.07,mmax-VH*0.1);MO[4].hy=Math.min(ab+VH*0.2,mmax);
+  /* нажать можно на весь шкаф, не только на дверцу */
+  elDoor.style.left=G.sLeft+'px';elDoor.style.top=G.sTop+'px';elDoor.style.width=G.sw+'px';elDoor.style.height=G.sh+'px';
+  /* мотыльки сидят на стене вокруг шкафа, один прилетает из-за края */
+  var sl=G.sLeft,sr=G.sLeft+G.sw,mx=Math.max(14,Math.min(40,sl*0.3)),WQ=[0,0.5,0.62,0.76,0.9];
+  MO[0].hx=VW+60;MO[0].hy=-60;MO[1].hx=Math.max(16,sl-mx);MO[1].hy=G.sTop+G.sh*0.3;MO[2].hx=Math.min(VW-16,sr+mx);MO[2].hy=G.sTop+G.sh*0.16;
+  MO[3].hx=sl+G.sw*0.78;MO[3].hy=G.sTop+G.sh*0.06;MO[4].hx=Math.max(16,sl-mx*0.6);MO[4].hy=G.sTop+G.sh*0.74;
+  for(var i=0;i<MO.length;i++)MO[i].wq=WQ[i];
+  /* стена и свет на ней */
+  G.sr=Math.round(Math.max(0.7*VH,300));G.ww=Math.min(VW,2*G.sr+40);G.pitch=Math.max(34,Math.min(60,VH*0.05));
+  root.style.setProperty('--sr',G.sr+'px');root.style.setProperty('--gy',G.gyD.toFixed(1)+'px');
+  elWall.style.width=G.ww+'px';elWall.style.marginLeft=(-G.ww/2)+'px';
   rasterWard();wallTile();
   buildHall();
   st.dirty=true;
@@ -466,23 +484,6 @@ function rasterVault(){
       i=y*w+x;o[i]=ink(lut[T[i]]*fy*(0.2+0.64*(Lg>1?1:Lg)),x,y,0)}}
   c.putImageData(id,0,0);
 }
-/* Кружево: узор снят с синей стены Подвала. Светлее там, куда достают горящие фонари, но видно на всей стене */
-load('lace.webp',function(im){imLace=im;rasterLace()});
-function rasterLace(){
-  if(!imLace||!B.vh)return;var Wl=Math.min(VW,1500),Hl=B.wallH,key=Wl+'x'+Hl+B.key;if(lCv._k===key)return;lCv._k=key;
-  var sc=Math.min(2,window.devicePixelRatio||1,Math.sqrt(2.0e6/(Wl*Hl))),w=Math.round(Wl*sc),h=Math.round(Hl*sc);
-  lCv.width=w;lCv.height=h;lCv.style.width=Wl+'px';lCv.style.height=Hl+'px';lCv.style.marginLeft=(-Wl/2)+'px';lCv.style.top=B.wallTop+'px';
-  var c=lCv.getContext('2d',{willReadFrequently:true}),iw=imLace.naturalWidth,ih=imLace.naturalHeight,cy0=Math.round(ih*0.1),dw=Math.max(Wl/2,640)*sc,dh=dw*(ih-cy0)/iw,ty;
-  c.fillStyle='#000';c.fillRect(0,0,w,h);c.imageSmoothingQuality='high';
-  for(ty=0;ty<h;ty+=dh){c.drawImage(imLace,0,cy0,iw,ih-cy0,w/2,ty,dw,dh);c.save();c.translate(w/2,0);c.scale(-1,1);c.drawImage(imLace,0,cy0,iw,ih-cy0,0,ty,dw,dh);c.restore()}
-  var id=c.getImageData(0,0,w,h),p=id.data,ls=lights(),nl=ls.length,R=Math.max(340,0.66*VH),R2=R*R,x0=(VW-Wl)/2,y0=B.wallTop,x,y,i,k;
-  for(y=0;y<h;y++){var Y=y/sc,fy=sm(Y/50)*(1-sm((Y-(Hl-140))/140));
-    for(x=0;x<w;x++){i=(y*w+x)*4;var lum=p[i];if(!lum||!fy){p[i+3]=0;continue}
-      var X=x/sc+x0,Lg=0;for(k=0;k<nl;k+=2){var dx=X-ls[k],dy=Y+y0-ls[k+1],q=(dx*dx+dy*dy)/R2;if(q<1)Lg+=(1-q)*(1-q)}
-      var fx=Wl<VW?sm(x/sc/110)*sm((Wl-x/sc)/110):1,a=lum*(0.36+0.8*(Lg>1?1:Lg))*fy*fx*0.56;
-      p[i]=150;p[i+1]=156;p[i+2]=255;p[i+3]=a>255?255:a}}
-  c.putImageData(id,0,0);
-}
 function wallGlow(){
   var ls=lights(),R=Math.round(Math.max(250,0.42*VH)),g=[],maxY=0;
   for(var k=0;k<ls.length;k+=2){g.push('radial-gradient(circle '+R+'px at '+Math.round(ls[k])+'px '+Math.round(ls[k+1])+'px,rgba(34,40,255,.16),rgba(34,40,255,.06) 50%,rgba(34,40,255,0))');if(ls[k+1]>maxY)maxY=ls[k+1]}
@@ -504,10 +505,10 @@ function buildHall(){
   var ar=elAf.getBoundingClientRect(),t0=lamps[0].getBoundingClientRect().top,sy=0;
   for(j=0;j<N;j++){var r=lamps[j].getBoundingClientRect();B.PX[j]=r.left-ar.left+r.width/2;B.PY[j]=r.top-ar.top+B.h*0.62;lamps[j].classList.toggle('r0',r.top<t0+4);sy+=B.PY[j]}
   B.msc=Math.max(0.62,Math.min(1,B.w/62));B.cx=VW/2;B.cy=sy/N;B.span=0;for(j=0;j<N;j++)B.span=Math.max(B.span,Math.abs(B.PX[j]-B.cx));
-  /* стена с кружевом начинается под подписями фонарей и идёт до низа зала */
+  /* стена зала под подписями фонарей */
   B.wallTop=Math.round(elLamps.getBoundingClientRect().bottom-ar.top+2);B.wallH=Math.round(Math.max(300,Math.min(1100,ar.height-B.wallTop)));
   B.key=':'+cw+':'+Math.round(B.PX[0])+':'+Math.round(B.PY[N-1])+':'+B.wallTop;
-  rasterVault();rasterLace();wallGlow();
+  rasterVault();wallGlow();
   st.px=null;placeSel();
 }
 function applyPool(){elPoolSel.style.transform='translate('+st.px.toFixed(1)+'px,'+st.py.toFixed(1)+'px)'}
@@ -554,96 +555,102 @@ elForm.addEventListener('submit',function(ev){ev.preventDefault();
 $('f-ok').addEventListener('change',function(){$('e-ok').hidden=true});
 
 /* ── действия ── */
-function ignite(){if(st.litOn)return;st.litOn=true;root.classList.add('lit');st.dirty=true}
-elIgn.addEventListener('click',ignite);
-setTimeout(ignite,3600);
-function scrollAnim(to,dur){
-  if(reduce){window.scrollTo(0,to);return}
-  var from=window.pageYOffset,t0=performance.now();st.anim=function(t){var u=cl((t-t0)/dur);u=u<0.5?2*u*u:1-Math.pow(-2*u+2,2)/2;window.scrollTo(0,from+(to-from)*u);if(u>=1)st.anim=null};
+/* фонарь сам не зажигается: страница ждёт нажатия, а через несколько секунд подсказывает */
+function start(){
+  if(st.phase)return;st.phase=1;st.t1=performance.now();st.litOn=true;root.classList.add('lit');
+  elIgn.hidden=true;elHint.classList.remove('on');st.dirty=true;
 }
-function stopAnim(){st.anim=null;st.scT=performance.now()}
-window.addEventListener('wheel',stopAnim,{passive:true});
-window.addEventListener('touchstart',function(){st.touch=true;stopAnim()},{passive:true});
-function touchOff(){st.touch=false;st.scT=performance.now()}
-window.addEventListener('touchend',touchOff,{passive:true});window.addEventListener('touchcancel',touchOff,{passive:true});
-elDoor.addEventListener('click',function(){st.dir=1;scrollAnim(G.base+Math.ceil(S.hall)+1,2800)});
-function jump(){ignite();st.lit=1;window.scrollTo(0,G.base+Math.ceil(S.hall)+1);st.dirty=true}
+elIgn.addEventListener('click',start);
+function openDoor(){if(st.phase!==1||!st.can)return;st.phase=2;st.t2=performance.now();st.dirty=true}
+elDoor.addEventListener('click',openDoor);
+function enterHall(t){
+  st.phase=3;root.classList.remove('intro');root.classList.add('hall');elDoor.hidden=true;st.can=false;
+  elAf.classList.add('in');elMore.classList.add('in');window.scrollTo(0,0);buildHall();
+  st.farOn=false;elFar.className='';st.hallT=t;st.shown=false;elAf.classList.remove('picked');st.dirty=true;
+}
+function jump(){
+  if(st.phase===3){window.scrollTo(0,0);return}
+  st.litOn=true;st.lit=1;root.classList.add('lit');elIgn.hidden=true;enterHall(performance.now());
+}
 $('jump').addEventListener('click',function(ev){ev.preventDefault();jump()});
 window.addEventListener('hashchange',function(){if(location.hash==='#afisha')jump()});
 window.addEventListener('scroll',function(){st.dirty=true},{passive:true});
 window.addEventListener('pointermove',function(ev){st.mx=ev.clientX},{passive:true});
 var rz=null,lastW=0,lastH=0;
-window.addEventListener('resize',function(){clearTimeout(rz);rz=setTimeout(function(){var w=root.clientWidth,h=window.innerHeight;if(w===lastW&&Math.abs(h-lastH)<130)return;lastW=w;lastH=h;var k=Math.max(0,window.pageYOffset-G.base)/(S.hall||1);build();window.scrollTo(0,G.base+k*S.hall)},180)});
+window.addEventListener('resize',function(){clearTimeout(rz);rz=setTimeout(function(){var w=root.clientWidth,h=window.innerHeight;if(w===lastW&&Math.abs(h-lastH)<130)return;lastW=w;lastH=h;build()},180)});
 
 var last={};
 function set(el,prop,val){var k=el.id+prop;if(last[k]===val)return;last[k]=val;el.style[prop]=val}
+function ease(p){return p<0.5?2*p*p:1-Math.pow(-2*p+2,2)/2}
 function frame(t){
   requestAnimationFrame(frame);
   if(doc.hidden||!VW)return;
-  if(st.anim)st.anim(t);
-  var s=Math.max(0,(window.pageYOffset||0)-G.base),moving=false,j,dt=Math.min(64,t-(st.lastT||t));st.lastT=t;
-  if(s>8&&!st.litOn)ignite();
-  var lt=st.litOn?1:0;if(Math.abs(lt-st.lit)>0.004){st.lit=reduce?lt:st.lit+(lt-st.lit)*0.06;moving=true}else st.lit=lt;
-  var ds=s-(st.lastS<0?s:st.lastS);if(ds!==0){moving=true;st.scT=t;if(!st.anim)st.dir=ds>0?1:-1}st.lastS=s;
-  /* фонарь покачивается от прокрутки и за курсором */
-  if(!reduce){var tgt=st.mx>=0?(st.mx/VW-0.5)*2.2:0;st.swayV+=(tgt-st.sway)*0.02-st.swayV*0.09-ds*0.012;st.sway+=st.swayV;if(st.sway>9)st.sway=9;if(st.sway<-9)st.sway=-9;if(Math.abs(st.swayV)>0.004)moving=true}
-  /* шкаф приоткрывается сам, если возле него остановиться */
-  var near=s>S.room-VH*0.1&&s<S.door+2;
-  if(near){if(!st.nearT)st.nearT=t;if((t-st.nearT>900||reduce)&&!st.ajarOn){st.ajarOn=true;moving=true}}else st.nearT=0;
-  /* в проёме страница не зависает: доводим до зала или обратно к шкафу */
-  if(!reduce&&!st.anim&&!st.touch&&s>S.door+1&&s<S.hall-1&&t-st.scT>260){var back=st.dir<0&&(s-S.door)<(S.hall-S.door)*0.7;scrollAnim(G.base+(back?Math.floor(S.room):Math.ceil(S.hall)+1),600+2200*(back?s-S.room:S.hall-s)/(S.hall-S.room))}
-  var inHall=s>=S.hall-1;
-  if(inHall!==st.inHall){st.inHall=inHall;elAf.classList.toggle('in',inHall);elMore.classList.toggle('in',inHall);root.classList.toggle('hall',inHall);
-    if(inHall){st.farOn=false;elFar.className='';if(!st.hallSeen){st.hallSeen=true;st.hallT=t;st.shown=false;elAf.classList.remove('picked')}}else st.fromHall=true;
-    moving=true}
-  if(inHall){var hs=(t-st.hallT)/1000;
-    if(!st.shown&&(hs>1.5||reduce))pick(st.first,t,false);
+  if(!st.t0)st.t0=t;
+  var sy=window.pageYOffset||0,moving=false,j,dt=Math.min(64,t-(st.lastT||t));st.lastT=t;
+  if(sy!==st.lastS){st.lastS=sy;moving=true}
+  var lt=st.litOn?1:0;if(Math.abs(lt-st.lit)>0.004){st.lit=reduce?lt:st.lit+(lt-st.lit)*(1-Math.exp(-dt/260));moving=true}else st.lit=lt;
+  /* темнеет с нажатия на фонарь, проход в шкаф идёт с нажатия на шкаф */
+  var q=st.phase===0?0:st.phase>1||reduce?1:cl((t-st.t1)/DARK_MS);if(st.phase===1&&q<1)moving=true;st.q=q;
+  var u=0;if(st.phase===2){var pu=reduce?1:cl((t-st.t2)/ENTER_MS);u=ease(pu);moving=true;if(pu>=1){enterHall(t);u=1}}else if(st.phase===3)u=1;
+  var inHall=st.phase===3;
+  if(st.phase===0&&!st.hintOn&&t-st.t0>HINT_MS){st.hintOn=true;elHint.classList.add('on')}
+  /* фонарь покачивается за курсором */
+  if(!reduce){var tgt=st.mx>=0?(st.mx/VW-0.5)*2.2:0;st.swayV+=(tgt-st.sway)*0.02-st.swayV*0.09;st.sway+=st.swayV;if(st.sway>9)st.sway=9;if(st.sway<-9)st.sway=-9;if(Math.abs(st.swayV)>0.004)moving=true}
+  /* когда шкаф проступил целиком, дверца немного погодя приоткрывается сама. Войти можно только нажатием */
+  if(st.phase===1&&q>=1&&!st.ajarT)st.ajarT=t+(reduce?0:AJAR_MS);
+  var ajar=st.ajarT&&t>=st.ajarT;
+  if(inHall){var hs2=(t-st.hallT)/1000;
+    if(!st.shown&&(hs2>1.5||reduce))pick(st.first,t,false);
     if(st.shown&&!st.touched&&!reduce&&t-st.lastSw>7000&&elForm.hidden&&elDone.hidden)pick(nextOn(1),t,false);
     /* свет выбранного фонаря переезжает плавно */
     var qx=B.PX[st.sel],qy=B.PY[st.sel];
     if(st.px!==null&&(qx!==st.px||qy!==st.py)){if(Math.abs(qx-st.px)+Math.abs(qy-st.py)>0.5){var kk=1-Math.exp(-dt/170);st.px+=(qx-st.px)*kk;st.py+=(qy-st.py)*kk}else{st.px=qx;st.py=qy}applyPool();moving=true}
   }
-  /* дверца: приоткрыта на 30 градусов, пока стоим у шкафа, дальше распахивается прокруткой. К нужному углу идёт плавно */
-  var pre=cl((s-S.room)/(S.door-S.room)),u=cl((s-S.door)/(S.hall-S.door));
-  var tt=u>0?30+56*sm(u/0.3):((pre>0.45||st.ajarOn)&&s>S.room-VH*0.1?30:0);
+  var tt=u>0?30+56*sm(u/0.3):(ajar?30:0);
   if(st.theta!==tt){if(reduce||Math.abs(tt-st.theta)<0.2)st.theta=tt;else st.theta+=(tt-st.theta)*(1-Math.exp(-dt/110));moving=true}
-  moths(dt,s,inHall,u);
+  var e=sm(q/0.72),hs=lerp(G.hero,G.ds,e),out=sm((u-0.26)/0.3);st.lampUp=out*(G.lh+G.lt+60)*hs;
+  /* мотыльки кружат у фонаря, к приоткрытому шкафу слетаются на свет в щели */
+  moths(dt,inHall?2:(u>0.1||(ajar&&t-st.ajarT>GAP_MS))?1:0,hs,sy);
   if(!moving&&!st.dirty)return;
   st.dirty=false;
-  var e=sm(s/S.night),e1=e<0.5?e*2:1,e2=e<0.5?0:e*2-1;
+  var e1=e<0.5?e*2:1,e2=e<0.5?0:e*2-1;
   /* небо: бумага, сумерки, ночь */
   set(elCd,'opacity',e1.toFixed(3));set(elCn,'opacity',e2.toFixed(3));
-  var night=e>0.45,deep=s>S.hall+VH*0.12;
+  var night=e>0.45,deep=inHall&&sy>VH*0.12;
   if(night!==st.night||deep!==st.deep){st.night=night;st.deep=deep;doc.body.className=(night?'night':'')+(deep?' deep':'')}
   set(elH1,'opacity',cl(1-e*3.2).toFixed(2));
-  /* проход через шкаф: камера шагает в проём, шкаф растворяется, фонарь остаётся снаружи */
-  var ze=reduce?0:sm((u-0.32)/0.5),z=1+0.75*ze,dark=sm((u-0.36)/0.42);
-  /* фонарь */
-  var L=st.lit,out=sm((u-0.26)/0.3),hero=lerp(G.hero,1,e),gy=G.gy*hero;
-  set(elLamp,'transform','translateY('+(-out*(G.lh+G.lt+60)).toFixed(1)+'px) rotate('+st.sway.toFixed(2)+'deg) scale('+hero.toFixed(3)+')');
+  /* проход через шкаф: камера шагает в проём, шкаф растворяется, фонарь уходит вверх */
+  var ze=reduce?0:sm((u-0.32)/0.5),z=1+0.75*ze,dark=sm((u-0.36)/0.42),dark2=sm((u-0.3)/0.3);
+  var L=st.lit,gy=G.gy*hs;
+  set(elLamp,'transform','translateY('+(-st.lampUp).toFixed(1)+'px) rotate('+st.sway.toFixed(2)+'deg) scale('+hs.toFixed(3)+')');
   set(lBm,'opacity',(L*(1-e)*0.92).toFixed(2));set(lBn,'opacity',(L*e*0.92).toFixed(2));set(lG1,'opacity',(L*sm(e*1.5)).toFixed(2));
   set(elLamp,'color',e>0.5?'#07070d':'#141416');
   set(elPool,'transform','translateY('+gy.toFixed(1)+'px)');
   set(elPool,'opacity',inHall?'0':(L*lerp(0.5,1,e)*(1-dark)).toFixed(2));
-  /* стена проступает, когда стемнело, едет вместе со страницей и останавливается вместе со шкафом */
-  if(!inHall){var wo=sm((e-0.5)/0.5)*(1-dark);set(elShade,'opacity',wo.toFixed(3));set(elWall,'opacity',Math.max(wo,G.tw&&dark<1?0.012:0).toFixed(3));set(elWall,'transform','translate3d(0,'+(G.wy0-Math.min(s,S.room)).toFixed(1)+'px,0)')}
-  if(!inHall&&s>S.room-VH*1.1&&W.body){
-    var stTop=Math.max(0,S.room-s),arr=sm(1-stTop/VH);
+  if(!inHall){
+    /* из темноты сначала проступает тень вокруг света, потом кладка, шкаф и надписи на стене */
+    var so=sm((q-0.22)/0.4)*(1-dark),wo=sm((q-0.38)/0.45)*(1-dark2),to=sm((q-0.66)/0.34)*(1-dark2);
+    set(elShade,'opacity',so.toFixed(3));set(elWall,'opacity',Math.max(wo,G.tw&&dark<1?0.012:0).toFixed(3));
+    set(elName,'opacity',to.toFixed(3));set(elAbout,'opacity',to.toFixed(3));
+  }
+  if(!inHall&&W.body){
     if(Math.abs(st.theta-W.th)>0.12)drawDoor(st.theta);
-    set(elScene,'opacity',((0.12+0.88*arr*arr)*(1-sm((u-0.4)/0.32))).toFixed(3));
+    var wardO=sm((q-0.4)/0.5);
+    set(elScene,'opacity',(wardO*(1-sm((u-0.4)/0.32))).toFixed(3));
     set(elScene,'transform',ze>0?'scale('+z.toFixed(3)+')':'none');
     var zc=ze>0.02;if(zc!==st.zc){st.zc=zc;elWcv.style.imageRendering=zc?'auto':'pixelated'}
     /* огни зала в проёме: в щели видны первые два, дверца открывает остальные, потом они растут в фонари афиши и встают на места */
-    var R=W.r,dX=G.sLeft+R[0],dY=stTop+G.sTop+R[1],dW=R[4],dH=R[5],gapW=Math.max(0,W.xf-R[0]),open=sm((st.theta-30)/56);
+    var R=W.r,dX=G.sLeft+R[0],dY=G.sTop+R[1],dW=R[4],dH=R[5],gapW=Math.max(0,W.xf-R[0]),open=sm((st.theta-30)/56);
     var show=st.theta>1.5,ef=reduce?sm(u):sm((u-0.3)/0.66),k0=Math.min(1/7,0.7*dW/(2*B.span+B.w)),kf=Math.exp(Math.log(k0)*(1-ef)),f1=st.first,f2=Math.min(N-1,f1+1);
-    var ox=((B.PX[f1]+B.PX[f2])/2-B.cx)*k0,cx=lerp(lerp(dX+gapW/2-ox,dX+dW/2,open),B.cx,ef),cy=lerp(dY+dH*0.45,B.cy,ef);
+    var ox=((B.PX[f1]+B.PX[f2])/2-B.cx)*k0,cx=lerp(lerp(dX+gapW/2-ox,dX+dW/2,open),B.cx,ef),cy=lerp(dY+dH*0.45,G.afTop+B.cy,ef);
     st.gx=cx;st.gy=cy;st.gf=ef;
-    if(show!==st.farOn){st.farOn=show;elFar.className=show?(st.fromHall?'show':'show fade'):'';st.fromHall=false}
+    if(show!==st.farOn){st.farOn=show;elFar.className=show?'show fade':''}
     set(elFar,'clipPath',ef>0?'none':'inset('+dY.toFixed(0)+'px '+(VW-dX-gapW).toFixed(0)+'px '+(VH-dY-dH).toFixed(0)+'px '+dX.toFixed(0)+'px)');
     for(j=0;j<N;j++){var tr='translate('+(cx+(B.PX[j]-B.cx)*kf-B.w/2).toFixed(1)+'px,'+(cy+(B.PY[j]-B.cy)*kf-B.h*0.62).toFixed(1)+'px) scale('+kf.toFixed(3)+')';
       fars[j].style.transform=tr;if(farB[j])farB[j].style.transform=tr}
   }else if(st.farOn){st.farOn=false;elFar.className=''}
-  var pinned=s>S.room-VH*0.15&&s<S.hall-1;if(pinned!==st.pinned){st.pinned=pinned;elDoor.hidden=!pinned}
+  /* шкаф можно нажать, когда он уже виден */
+  var can=st.phase===1&&q>0.6;if(can!==st.can){st.can=can;elDoor.hidden=!can;if(can&&(doc.activeElement===elIgn||doc.activeElement===doc.body))try{elDoor.focus({preventScroll:true})}catch(_){}}
 }
 function boot(){lastW=root.clientWidth;lastH=window.innerHeight;build();showEvent();if(location.hash==='#afisha')jump();requestAnimationFrame(frame)}
 if(doc.fonts&&doc.fonts.load)doc.fonts.load('60px Forum','ПОДВАЛ').then(function(){if(VW)build()},function(){});
